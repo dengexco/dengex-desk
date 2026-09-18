@@ -38,7 +38,7 @@ func main() {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.Header().Set("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'; frame-ancestors 'none'")
 		w.Header().Set("X-Content-Type-Options", "nosniff")
-		_, _ = w.Write([]byte(`<!doctype html><html lang="tr"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>dengeX Remote — Pilot</title><style>body{font:16px system-ui;background:#f4f8f7;color:#183d36;max-width:650px;margin:10vh auto;padding:30px}h1{font-size:36px}p{line-height:1.8}a{display:inline-block;background:#087f73;color:white;padding:14px 20px;border-radius:8px;text-decoration:none}</style><h1>dengeX Remote</h1><p>Windows üzerinden Mac ekranını izlemek için davetli geliştirme denemesi.</p><a href="/download/windows">Windows x64 paketini indir</a><p>ZIP’i açın, dengeX Remote.exe dosyasını çalıştırın. <b>Cihaza bağlan</b> bölümüne Mac uygulamasında oluşturulan tek kullanımlık daveti girin. Mac kullanıcısı paylaşımı ayrıca kabul eder.</p><p>Geliştirme paketi Windows sertifikasıyla imzalanmamıştır. Windows cihazında çalıştırma doğrulaması bekleniyor. Bu pilot yalnızca görüntüleme destekler; uzaktan klavye/fare kontrolü içermez. WebView2 gerekir. Doğrudan WebRTC bağlantısı kurulamazsa ayrı TURN hizmeti gerekir.</p></html>`))
+		_, _ = w.Write([]byte(`<!doctype html><html lang="tr"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>dengeX Remote — Pilot</title><style>body{font:16px system-ui;background:#f4f8f7;color:#183d36;max-width:650px;margin:10vh auto;padding:30px}h1{font-size:36px}p{line-height:1.8}a{display:inline-block;background:#087f73;color:white;padding:14px 20px;border-radius:8px;text-decoration:none}</style><h1>dengeX Remote</h1><p>Mac veya Windows üzerinden karşı bilgisayarın ekranını izlemek için davetli geliştirme denemesi.</p><a href="/download/windows">Windows x64 paketini indir</a><p>ZIP’i açın, dengeX Remote.exe dosyasını çalıştırın. <b>Cihaza bağlan</b> bölümünde Windows cihazında davet oluşturun; kodu Mac uygulamasına girin. Windows kullanıcısı paylaşımı ayrıca kabul eder.</p><p>Geliştirme paketi Windows sertifikasıyla imzalanmamıştır. Windows cihazında çalıştırma doğrulaması bekleniyor. Bu pilot yalnızca görüntüleme destekler; uzaktan klavye/fare kontrolü içermez. WebView2 gerekir. Doğrudan WebRTC bağlantısı kurulamazsa ayrı TURN hizmeti gerekir.</p></html>`))
 	})
 	mux.HandleFunc("GET /download/windows", func(w http.ResponseWriter, r *http.Request) {
 		path := os.Getenv("DX_PILOT_WINDOWS_ZIP")
@@ -63,6 +63,7 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
+		server.AllowGuestHosts = os.Getenv("DX_PILOT_GUEST_HOSTS") == "1"
 		mux.Handle("/pilot/", server.Handler())
 	}
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {

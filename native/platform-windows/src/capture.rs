@@ -1,5 +1,5 @@
-//! DXGI CPU-readback spike. Rotation, cursor compositing, access-loss recovery
-//! and Media Foundation encoding must pass native acceptance before shipping.
+//! DXGI CPU readback for an explicitly approved interactive desktop.
+//! Rotation and cursor compositing remain outside the current pilot.
 use windows::{
     core::{Error, Interface, Result},
     Win32::{
@@ -61,15 +61,14 @@ impl Capture {
             let mut info = DXGI_OUTDUPL_FRAME_INFO::default();
             let mut resource = None;
             self.duplication
-                .AcquireNextFrame(100, &mut info, &mut resource)?;
+                .AcquireNextFrame(16, &mut info, &mut resource)?;
             let result = (|| {
                 let texture: ID3D11Texture2D = resource
                     .ok_or_else(|| Error::new(E_FAIL, "no acquired texture"))?
                     .cast()?;
                 let mut desc = D3D11_TEXTURE2D_DESC::default();
                 texture.GetDesc(&mut desc);
-                if desc.Width > 16384 || desc.Height > 16384 || desc.Width == 0 || desc.Height == 0
-                {
+                if desc.Width > 8192 || desc.Height > 8192 || desc.Width == 0 || desc.Height == 0 {
                     return Err(Error::new(E_FAIL, "invalid display dimensions"));
                 }
                 if desc.Format != DXGI_FORMAT_B8G8R8A8_UNORM {

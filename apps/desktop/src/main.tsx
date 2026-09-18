@@ -15,7 +15,7 @@ function App(){
  const [status,setStatus]=useState<NativeStatus>();
  const [error,setError]=useState('');
  const [identity,setIdentity]=useState<DeviceIdentity>();
- const [viewerOnly,setViewerOnly]=useState(false);
+ const [unregisteredWindows,setUnregisteredWindows]=useState(false);
  const [identityError,setIdentityError]=useState('');
  const [permissionBusy,setPermissionBusy]=useState(false);
  const [permissionNotice,setPermissionNotice]=useState('');
@@ -28,7 +28,7 @@ function App(){
  async function loadIdentity(){
   if(!native)return;
   setIdentityError('');
-  try{const value=await invoke<DeviceIdentity & {viewerOnly?:boolean}>('device_identity');if(value.viewerOnly){setViewerOnly(true)}else{setIdentity(value)}}catch(e){setIdentityError(String(e))}
+  try{const value=await invoke<DeviceIdentity & {unregisteredWindows?:boolean}>('device_identity');if(value.unregisteredWindows){setUnregisteredWindows(true)}else{setIdentity(value)}}catch(e){setIdentityError(String(e))}
  }
  useEffect(()=>{
   void refresh();void loadIdentity();
@@ -77,11 +77,11 @@ function App(){
    {tab==='pilot'?<Pilot/>:tab==='support'?<>
     <div className="eyebrow"><span className="line"/> DENGEX REMOTE</div><h1>{t.product}</h1><p className="lead">{t.subtitle}</p>
     <section className="support-card"><div className="card-top"><span className="card-icon"><Monitor size={23}/></span><div><h2>Birlikte çözelim.</h2><p>Bu bilgisayarın kimliği ve bağlantı durumu.</p></div><span className="offline"><span/>{t.notConnected}</span></div>
-     <div className="identity-grid"><div><label>{t.identity}</label><div className={identity?"device-id":"placeholder-id"}>{identity?.supportId??(viewerOnly?"Windows izleyici":identityError?"Kimlik okunamadı":"Oluşturuluyor…")}</div><span className="field-hint">{identity?`${identity.deviceName}${identity.storage==='none'?'':' · Bu cihazda kayıtlı'}`:viewerOnly?"Bu pilotta yalnızca davet ile ekran izlenir":native?"Cihazın anahtar kasası kontrol ediliyor":"Native uygulamada oluşturulur"}</span></div><div><label>{t.code}</label><div className="unavailable-code">Henüz kullanılamıyor</div><span className="field-hint"><LockKeyhole size={12}/>{t.pendingCode}</span></div></div>
+     <div className="identity-grid"><div><label>{t.identity}</label><div className={identity?"device-id":"placeholder-id"}>{identity?.supportId??(unregisteredWindows?"Windows pilot cihazı":identityError?"Kimlik okunamadı":"Oluşturuluyor…")}</div><span className="field-hint">{identity?`${identity.deviceName}${identity.storage==='none'?'':' · Bu cihazda kayıtlı'}`:unregisteredWindows?"Bağlantı için Cihaza bağlan bölümünden davet oluşturun":native?"Cihazın anahtar kasası kontrol ediliyor":"Native uygulamada oluşturulur"}</span></div><div><label>{t.code}</label><div className="unavailable-code">Henüz kullanılamıyor</div><span className="field-hint"><LockKeyhole size={12}/>{t.pendingCode}</span></div></div>
      <div className="support-footer"><div><LockKeyhole size={16}/><span>Her bağlantı için açık onayınız gerekir.</span></div><button className="primary" onClick={()=>setTab('pilot')}>İki cihazla dene <ArrowUpRight size={16}/></button></div>
     </section>
     {identityError&&<div className="error" role="alert"><p>{identityError}</p><button className="secondary" onClick={loadIdentity}>Tekrar dene</button></div>}
-    <div className="info-notice"><CircleHelp size={18}/><p>{viewerOnly?"Cihaza bağlan bölümünden Mac’te oluşturulan daveti girin. Bu Windows paketi ekran paylaşmaz; yerel destek kimliği henüz kaydedilmez.":t.supportUnavailable}</p></div>
+    <div className="info-notice"><CircleHelp size={18}/><p>{unregisteredWindows?"Bu Windows ekranını paylaşmak için Cihaza bağlan → Davet oluştur yolunu kullanın. Kalıcı cihaz kimliği kaydı bu pilotta henüz yoktur.":t.supportUnavailable}</p></div>
     <div className="two-columns"><section className="small-card"><div className="section-title"><ShieldCheck size={20}/><h3>Paylaşım izinleri</h3><button onClick={()=>setTab('permissions')} className="text-button">Yönet <ChevronRight size={14}/></button></div><div className="permission-row"><span><Monitor size={16}/>{t.screen}</span><span className={status?.screenRecording?'permission-ok':'muted'}>{permission(status?.screenRecording)}</span></div><div className="permission-row"><span><Command size={16}/>{t.input}</span><span className={status?.accessibility?'permission-ok':'muted'}>{permission(status?.accessibility)}</span></div></section>
     <section className="small-card"><div className="section-title"><KeyRound size={20}/><h3>{t.permanent}</h3><span className="closed">{t.disabled}</span></div><p className="small-description">Bu cihaza yalnızca sizin onayınızla erişim sağlanır. Katılımsız erişim henüz kullanılabilir değil.</p><div className="subtle-note"><LockKeyhole size={13}/> Kurulum, kalıcı erişimi etkinleştirmez.</div></section></div>
     <button className="lab-banner" onClick={()=>setTab('lab')}><span className="lab-symbol"><FlaskConical size={22}/></span><span><strong>Native motoru yakından inceleyin</strong><small>İzinler, video işleme ve WebRTC için gerçek yerel testler.</small></span><ArrowUpRight size={20}/></button>

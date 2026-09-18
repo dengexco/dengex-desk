@@ -16,7 +16,7 @@ jobs:
           toolchain: 1.98.1
           components: clippy,rustfmt
       - run: cargo test --locked -p dengex-agent-core
-      - run: cargo check --locked -p dengex-platform-windows
+      - run: cargo test --locked -p dengex-platform-windows
       - run: cargo build --locked -p dengex-transport
       - run: cargo run --locked -p dengex-transport -- transport --report transport.json
       - uses: actions/upload-artifact@v4

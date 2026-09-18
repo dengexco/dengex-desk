@@ -2,19 +2,20 @@
 
 Windows ve macOS için Tauri, Rust, Swift ve Go ile geliştirilen uzaktan destek projesi. [MIT lisanslıdır](LICENSE).
 
-**Geliştirme aşamasındadır; üretime hazır değildir.** Native laboratuvar araçları ve davet/onay ile Windows'tan Mac ekranını izlemeyi hedefleyen pilot akış mevcuttur. Windows'ta çalıştırma ve iki fiziksel cihaz arasında canlı görüntü kabulü henüz tamamlanmadı.
+**Geliştirme aşamasındadır; üretime hazır değildir.** Native laboratuvar araçları ve davet/onay ile Windows veya Mac ekranını karşı bilgisayardan izlemeyi hedefleyen pilot akış mevcuttur. Windows'ta çalıştırma ve iki fiziksel cihaz arasında canlı görüntü kabulü henüz tamamlanmadı.
 
 ## Windows uygulamasını indir
 
-**[Windows x64 ZIP paketini indir](https://github.com/dengexco/dengex-desk/releases/download/v0.1.0-pilot.1/dengeX-Remote-Windows-x64.zip)**
+**[Windows x64 ZIP paketini indir](https://github.com/dengexco/dengex-desk/releases/download/v0.1.0-pilot.2/dengeX-Remote-Windows-x64.zip)**
 
 1. `dengeX-Remote-Windows-x64.zip` dosyasının tamamını bir klasöre çıkartın.
 2. İçindeki **`dengeX Remote.exe`** uygulamasını açın; `resources` klasörünü yanında tutun.
-3. **Cihaza bağlan** bölümünde Mac kullanıcısından aldığınız daveti girin.
+3. **Windows ekranına bağlanmak için:** Windows’ta **Cihaza bağlan → Bu bilgisayarın ekranını paylaş → Davet oluştur** seçin.
+4. Mac’te **Davet ile ekranı izle** bölümüne Windows’taki kodu girin; Windows kullanıcısı gelen isteği kabul etsin.
 
-[Sürüm sayfasında](https://github.com/dengexco/dengex-desk/releases/tag/v0.1.0-pilot.1) EXE, kullanım adımları ve SHA-256 dosyası da bulunur. **Source code (zip)** geliştiriciler içindir; Windows'ta çalıştırılacak uygulama paketi yukarıdaki ZIP'tir. Tek EXE indirilirse sunucu adresini uygulamaya elle girmek gerekir.
+[Sürüm sayfasında](https://github.com/dengexco/dengex-desk/releases/tag/v0.1.0-pilot.2) EXE, kullanım adımları ve SHA-256 dosyası da bulunur. **Source code (zip)** geliştiriciler içindir; Windows'ta çalıştırılacak uygulama paketi yukarıdaki ZIP'tir. Tek EXE indirilirse sunucu adresini uygulamaya elle girmek gerekir.
 
-Windows 11 x64 hedeflenir; Microsoft Edge WebView2 Runtime gereklidir. Paket imzasız bir pilot sürümdür. İçindeki Cloudflare test adresi geçicidir; Mac ve pilot sunucusu açık kalmalıdır. Bu pilot yalnızca Windows'tan Mac ekranı izleme içindir.
+Windows 11 x64 hedeflenir; Microsoft Edge WebView2 Runtime gereklidir. Paket imzasız bir pilot sürümdür. İçindeki Cloudflare test adresi geçicidir; Mac ve pilot sunucusu açık kalmalıdır. Windows → Mac ve Mac → Windows ekran izleme akışları vardır; uzak klavye/fare kontrolü yoktur.
 
 Gerçek macOS ekran yakalama, VideoToolbox H.264 encode/decode, yerel WebRTC taşıma, native görüntü sunumu, Türkçe metin/fare deneyi ve native güvenlik çekirdeği geliştirildi. Sahte uzaktan bağlantı, örnek ekran videosu veya uydurma cihaz listesi yoktur. Ürün rotaları entegrasyon tamamlanana kadar 503 döner.
 
@@ -31,12 +32,14 @@ Git geçmişi kaynak kodu ve belgeleri içerir. Derleme çıktıları ve çalı�
 
 ## Cloudflare ve Windows görüntüleme pilotu
 
-18 Eylül güncellemesi: Windows x64 için portable Tauri uygulaması, Mac ekranını izlemek üzere davet/onay akışı ve ayrı HTTPS pilot API eklendi. **Windows → Mac yalnızca ekran izleme**; Windows ekranını paylaşma ve uzak klavye/fare henüz yok. Windows paketi derlendi; gerçek Windows cihazı üzerinde çalışma kabulü bekleniyor.
+Pilot 2, Windows cihazının davet oluşturmasını ve ekranını Mac’e paylaşmasını ekler. Windows ekranı DXGI ile alınır, en fazla 1280×720 NV12’ye dönüştürülür ve Windows Media Foundation H.264 kodlayıcısından WebRTC’ye verilir. Görüntü kareleri React/JSON/base64 üzerinden geçirilmez. Uzak klavye/fare halen yoktur; gerçek Windows ekranı ve iki fiziksel cihaz kabulü beklenir.
 
 - [Pilot kurulum ve güven sınırları](docs/cloudflare-pilot.tr.md)
 - [Windows kullanım adımları](docs/windows-pilot.tr.txt)
 - Geçerli adres: `python3 scripts/pilot-server.py status`. Cloudflare Quick Tunnel test içindir; bu Mac uyanık ve süreçler açık kalmalıdır.
-- Mac: **Cihaza bağlan → Davet oluştur**. Windows: sunucu adresi/davet ile istek. Mac: gelen isteği kabul.
+- Bağlanılacak Windows: **Cihaza bağlan → Davet oluştur**. İzleyecek Mac: daveti girip istek gönderir. Windows kullanıcısı ekranını paylaşmayı kabul eder.
+- İzleyen Mac’in ekran kaydı iznine ihtiyacı yoktur. Mac kendi ekranını paylaşacaksa macOS izni gerekir.
+- Sunucuda `DX_PILOT_GUEST_HOSTS=1` ile açılan misafir davet akışı, yönetim anahtarı dağıtmadan cihazın kendi oturumunu oluşturmasına izin verir; en fazla 6 yeni davet/dakika ve 8 açık oda.
 - Public HTTPS üzerinden davet, tekrar kullanımın reddi, host onayı ve sonlandırma kontrolleri [geçti](docs/testing/evidence/cloudflare-api.json). Bu sonuç Windows runtime veya iki fiziksel cihaz kabulü değildir.
 
 ## macOS geliştirme paketini açma
@@ -96,7 +99,7 @@ Cloudflare pilotunu çalıştırmak için [ayrı kurulum belgesini](docs/cloudfl
 
 ## Sıradaki kabul kapısı
 
-Windows encode/decode/input ve gerçek iki uçlu signaling/cihaz kimliği entegrasyonu; dört platform eşleşmesi; farklı ağ ve TURN/TLS; consent/revoke/lease'in canlı medya ve input'a bağlanması. Bunlar bitmeden Aşama 0 ve Aşama 1 tamamlandı sayılmaz. Ayrıntılı Next.js paneli, OIDC/MFA/PKCE, managed agent, cihaz parolası, dosya/pano/sohbet, imzalı güncelleme ve production işletim sonraki aşamalardır.
+Windows ekran paylaşımının gerçek cihaz kabulü, uzak input ve kalıcı cihaz kimliği entegrasyonu; dört platform eşleşmesi; farklı ağ ve TURN/TLS; consent/revoke/lease'in canlı medya ve input'a bağlanması. Bunlar bitmeden Aşama 0 ve Aşama 1 tamamlandı sayılmaz. Ayrıntılı Next.js paneli, OIDC/MFA/PKCE, managed agent, cihaz parolası, dosya/pano/sohbet, imzalı güncelleme ve production işletim sonraki aşamalardır.
 
 ## Lisans
 

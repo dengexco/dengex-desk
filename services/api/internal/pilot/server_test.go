@@ -118,3 +118,68 @@ func TestHeartbeatClosesSession(t *testing.T) {
 		t.Fatal(result)
 	}
 }
+func TestGuestHostsOptInAndConsent(t *testing.T) {
+	s, _, existing := fixture(t)
+	if code, _ := request(s, "POST", "/pilot/create-guest", "", map[string]any{}); code != 403 {
+		t.Fatal("guest hosts must be disabled by default", code)
+	}
+	s.AllowGuestHosts = true
+	code, host := request(s, "POST", "/pilot/create-guest", "", map[string]any{})
+	if code != 201 {
+		t.Fatal(code, host)
+	}
+	token := host["token"].(string)
+	if code, _ = request(s, "POST", "/pilot/create", token, nil); code != 401 {
+		t.Fatal("guest gained administration access")
+	}
+	if code, _ = request(s, "POST", "/pilot/action", token, map[string]any{"action": "offer", "description": desc("offer")}); code != 409 {
+		t.Fatal("screen offer allowed before consent")
+	}
+	_, viewer := request(s, "POST", "/pilot/join", "", map[string]string{"invite": host["invite"].(string), "name": "Mac viewer"})
+	if code, _ = request(s, "POST", "/pilot/action", viewer["token"].(string), map[string]string{"action": "accept"}); code != 409 {
+		t.Fatal("viewer accepted for host")
+	}
+	if code, _ = request(s, "POST", "/pilot/action", token, map[string]string{"action": "accept"}); code != 200 {
+		t.Fatal("Windows host consent failed")
+	}
+	_, other := request(s, "GET", "/pilot/room", existing["token"].(string), nil)
+	if other["state"] != "waiting" {
+		t.Fatal("guest affected an existing room")
+	}
+	if code, _ = request(s, "POST", "/pilot/create-guest", "", map[string]any{"device": "another-device"}); code != 400 {
+		t.Fatal("unknown fields accepted")
+	}
+}
+func TestGuestAdmissionIsBoundedUnderRace(t *testing.T) {
+	s, _, _ := fixture(t)
+	s.AllowGuestHosts = true
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	wins := 0
+	for i := 0; i < 20; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			code, _ := request(s, "POST", "/pilot/create-guest", "", map[string]any{})
+			if code == 201 {
+				mu.Lock()
+				wins++
+				mu.Unlock()
+			} else if code != 429 {
+				t.Errorf("unexpected response %d", code)
+			}
+		}()
+	}
+	wg.Wait()
+	if wins != 6 {
+		t.Fatalf("created %d rooms; budget must allow six", wins)
+	}
+	if code, _ := request(s, "POST", "/pilot/create-guest", "", map[string]any{}); code != 429 {
+		t.Fatal("rate limit not enforced")
+	}
+	now := s.now()
+	s.now = func() time.Time { return now.Add(61 * time.Second) }
+	if code, _ := request(s, "POST", "/pilot/create-guest", "", map[string]any{}); code != 201 {
+		t.Fatal("expired room capacity not recovered", code)
+	}
+}

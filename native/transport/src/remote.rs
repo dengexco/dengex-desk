@@ -122,6 +122,131 @@ impl Host {
         self.pc.set_remote_description(desc).await?;
         Ok(())
     }
+    #[cfg(windows)]
+    pub async fn stream_windows(
+        &self,
+        mut stop: watch::Receiver<bool>,
+        deadline: Arc<AtomicU64>,
+        clock: Instant,
+    ) -> Result<u64> {
+        use std::sync::atomic::AtomicBool;
+        struct WorkerGuard(Arc<AtomicBool>);
+        impl Drop for WorkerGuard {
+            fn drop(&mut self) {
+                self.0.store(false, Ordering::SeqCst);
+            }
+        }
+        let live = Arc::new(AtomicBool::new(true));
+        let _guard = WorkerGuard(live.clone());
+        let (sender, mut receiver) = mpsc::channel::<Result<Vec<u8>>>(2);
+        let worker_deadline = deadline.clone();
+        let worker_stop = stop.clone();
+        let worker_live = live.clone();
+        // COM, DXGI and the encoder are created, used and released on one thread.
+        // This worker never depends on JavaScript timers to stop capture.
+        tokio::task::spawn_blocking(move || {
+            use dengex_platform_windows::{
+                capture::Capture,
+                encoder::{Encoder, Runtime},
+                pixels,
+            };
+            let result = (|| -> Result<()> {
+                let valid = || {
+                    worker_live.load(Ordering::SeqCst)
+                        && !*worker_stop.borrow()
+                        && (clock.elapsed().as_millis() as u64)
+                            < worker_deadline.load(Ordering::SeqCst)
+                };
+                if !valid() {
+                    return Ok(());
+                }
+                let _runtime=Runtime::start().context("Windows Media Foundation başlatılamadı; Windows N sürümlerinde Media Feature Pack gerekir")?;
+                let capture=Capture::open(0).context("Windows ekranı açılamadı. Etkileşimli masaüstü açık olmalı; kilitli ekran, RDP veya döndürülmüş monitör bu pilotta desteklenmeyebilir")?;
+                let mut last = None;
+                let mut encoder = None;
+                let mut size = None;
+                let started = Instant::now();
+                while valid() {
+                    let tick = Instant::now();
+                    match capture.next_frame() {
+                        Ok(frame) => last = Some(frame),
+                        Err(e) if e.code().0 as u32 == 0x887A0027 => {} // DXGI_ERROR_WAIT_TIMEOUT: retain the latest real frame.
+                        Err(e) => {
+                            return Err(anyhow::anyhow!(
+                                "Windows ekran yakalama durdu (kilit/ekran değişikliği): {e}"
+                            ))
+                        }
+                    }
+                    if !valid() {
+                        break;
+                    }
+                    if last.is_none() && started.elapsed() > Duration::from_secs(10) {
+                        bail!("Windows ekranından ilk kare alınamadı; açık ve kilitsiz bir masaüstünde yeniden deneyin")
+                    }
+                    if let Some(frame) = &last {
+                        let dimensions = pixels::dimensions(frame.width, frame.height)
+                            .context("Desteklenmeyen ekran boyutu")?;
+                        if size.is_some_and(|s| s != (frame.width, frame.height)) {
+                            bail!("Monitör boyutu değişti; yeni bir oturum başlatın")
+                        }
+                        if encoder.is_none() {
+                            encoder = Some(
+                                Encoder::new(dimensions.0, dimensions.1)
+                                    .context("Windows H.264 kodlayıcısı açılamadı")?,
+                            );
+                            size = Some((frame.width, frame.height));
+                        }
+                        let data = pixels::nv12(
+                            &frame.bgra,
+                            frame.width,
+                            frame.height,
+                            dimensions.0,
+                            dimensions.1,
+                        )
+                        .context("Windows ekran karesi dönüştürülemedi")?;
+                        for output in encoder
+                            .as_mut()
+                            .unwrap()
+                            .encode(&data)
+                            .context("Windows ekranı H.264 olarak kodlanamadı")?
+                        {
+                            if !valid() || sender.blocking_send(Ok(output)).is_err() {
+                                return Ok(());
+                            }
+                        }
+                    }
+                    std::thread::sleep(Duration::from_millis(50).saturating_sub(tick.elapsed()));
+                }
+                Ok(())
+            })();
+            if let Err(e) = result {
+                let _ = sender.blocking_send(Err(e));
+            }
+        });
+        let mut frames = 0;
+        let mut ticker = interval(Duration::from_millis(100));
+        let mut last = Instant::now();
+        let result = loop {
+            tokio::select! {
+                output=receiver.recv()=>{
+                    let Some(output)=output else {break Ok(frames)};
+                    let output=match output{Ok(v)=>v,Err(e)=>break Err(e)};
+                    if *stop.borrow() || clock.elapsed().as_millis() as u64>=deadline.load(Ordering::SeqCst){break Ok(frames)}
+                    let duration=last.elapsed().max(Duration::from_millis(1));last=Instant::now();
+                    // Bound a stuck network send so local revocation stays responsive.
+                    match timeout(Duration::from_millis(250),self.track.write_sample(1,102,&Sample{data:output.into(),duration,..Default::default()},&[])).await {
+                        Ok(Ok(()))=>frames+=1,Ok(Err(e))=>break Err(e.into()),Err(_)=>break Err(anyhow::anyhow!("Görüntü aktarımı zaman aşımına uğradı"))
+                    }
+                },
+                _=stop.changed()=>break Ok(frames),
+                _=ticker.tick()=>if *stop.borrow() || clock.elapsed().as_millis() as u64>=deadline.load(Ordering::SeqCst){break Ok(frames)},
+            }
+        };
+        live.store(false, Ordering::SeqCst);
+        drop(receiver);
+        let _ = self.pc.close().await;
+        result
+    }
     pub async fn stream(
         &self,
         helper: &Path,

@@ -26,7 +26,7 @@ tokenfile=work/'create-token'
 if not tokenfile.exists():
  fd=os.open(tokenfile,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600)
  with os.fdopen(fd,'w') as f:f.write(secrets.token_urlsafe(32))
-env=dict(os.environ,DX_LISTEN='127.0.0.1:18433',DX_PILOT_TOKEN_FILE=str(tokenfile),DX_PILOT_WINDOWS_ZIP=str(root/'.artifacts/releases/dengeX-Remote-Windows-x64.zip'))
+env=dict(os.environ,DX_LISTEN='127.0.0.1:18433',DX_PILOT_GUEST_HOSTS='1',DX_PILOT_TOKEN_FILE=str(tokenfile),DX_PILOT_WINDOWS_ZIP=str(root/'.artifacts/releases/dengeX-Remote-Windows-x64.zip'))
 p=subprocess.Popen([str(api)],env=env,stdout=open(work/'api.log','ab'),stderr=subprocess.STDOUT,start_new_session=True)
 q=None
 try:

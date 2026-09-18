@@ -1,31 +1,43 @@
-dengeX Remote — Windows x64 görüntüleme pilotu
+dengeX Remote — Pilot 2 — Windows x64
 
-Bu geliştirme paketi Windows sertifikasıyla imzalanmamıştır. Windows 11 x64
-hedeflenir; gerçek Windows cihazında çalışma testi kullanıcı tarafından yapılacak.
-SmartScreen veya Defender'ı kapatmayın. Kurumsal politikada çalıştırma engellenirse
-BT yöneticinizin onaylı dağıtım sürecini kullanın.
+WINDOWS BİLGİSAYARA MAC'TEN BAĞLANMA
+1. ZIP'in tamamını klasöre çıkartın ve dengeX Remote.exe dosyasını açın.
+   resources klasörünü yanında tutun. Rust/Node/Go kurulumu gerekmez.
+2. Windows'ta Cihaza bağlan > Bu bilgisayarın ekranını paylaş > Davet oluştur.
+3. Oluşan davet kodunu Mac kullanıcısına iletin.
+4. Mac uygulamasında Cihaza bağlan > Davet ile ekranı izle bölümüne bu kodu
+   girin ve Bağlantı isteği gönder'e basın. İki cihazda sunucu adresi aynı olmalı.
+5. Windows'ta gelen cihaz adını kontrol edip Ekranımı paylaşmayı kabul et'e basın.
+6. Mac'te Windows ekranını izleyin. Denemeyi bitir veya uygulamayı kapatma
+   paylaşımı sonlandırır. Yeniden bağlanmak için yeni davet oluşturun.
 
-1. ZIP'in tamamını bir klasöre çıkartın; resources klasörünü silmeyin.
-2. dengeX Remote.exe dosyasını çalıştırın. Rust/Node/Go gerekmez.
-   Microsoft Edge WebView2 Runtime gereklidir. Eksikse Microsoft'un resmi
-   WebView2 indirme sayfasındaki Evergreen Runtime x64 kurulumunu kullanın:
-   https://developer.microsoft.com/microsoft-edge/webview2/
-3. Cihaza bağlan bölümüne geçin. Sunucu adresi doldurulmuş gelir.
-4. Mac uygulamasında Cihaza bağlan > Davet oluştur. Gösterilen daveti
-   Windows'taki Davet kodu alanına girin ve bağlantı isteği gönderin.
-5. Mac kullanıcısı gelen cihaz adını kontrol edip Ekranımı paylaşmayı kabul et
-   düğmesine basar. Ekran kaydı izni gerekir; sistem ayarları uygulamadan açılır.
-6. Windows'ta gerçek Mac ekranı açılır. Denemeyi bitir her iki uçta oturumu keser.
+Mac yalnızca izliyorsa Mac ekran kaydı izni gerekmez. Mac ekranını paylaşmak
+ için aynı işlemleri ters yönde yapın; o durumda macOS ekran kaydı izni gerekir.
 
-Bu pilot yalnızca Windows -> Mac ekran izleme destekler. Windows ekranını
-paylaşma, klavye/fare kontrolü, dosya/pano, hesap/MFA ve katılımsız erişim yoktur.
-Cihaz adı kullanıcı tarafından yazılır, doğrulanmış teknisyen hesabı değildir.
-Davet tek kullanımlıktır; bir deneme en fazla 30 dakika sürer. Yeniden bağlanmak
-veya reddedilen isteği tekrarlamak için Mac'te yeni davet oluşturun.
+GEREKSİNİMLER
+Windows 11 x64 hedeflenir. Microsoft Edge WebView2 Runtime gerekir:
+https://developer.microsoft.com/microsoft-edge/webview2/
+Windows N sürümlerinde Media Foundation için Media Feature Pack gerekebilir.
+İmzasız geliştirme paketidir; Windows güvenlik korumalarını kapatmayın.
 
-Cloudflare adresi geçicidir; Mac ve pilot sunucusu açık kalmalıdır. Tünel yeniden
-başlatılırsa adres değişebilir; Mac'teki güncel adresi Windows'a girin.
-Cloudflare tüneli eşleştirme HTTPS trafiğini taşır; görüntü doğrudan WebRTC ile
-DTLS/SRTP şifrelenir. Bu kurulumda TURN yoktur. Kısıtlı/simetrik NAT ağlarda
-sunucuya ulaşılırken görüntü bağlantısı başarısız olabilir; ayrı TURN gerekir.
-Oturum yetkisi yenilenemezse görüntü kapatılır. Paylaşım gizli çalışmaz.
+PİLOT SINIRLARI
+Yalnızca ekran izleme vardır; uzak klavye/fare, dosya/pano veya katılımsız
+ erişim yoktur. Windows'ta ilk DXGI monitörü, en fazla 1280x720, 20 fps hedefi;
+ gerçek fps/kalite kabulü yapılmadı. Döndürülmüş monitör, imleç birleştirme,
+ kilitli/güvenli masaüstü ve RDP oturumu desteklenmiş sayılmaz. Ekran veya oturum
+ değişirse yeniden bağlantı gerekebilir. Windows'ta Media Foundation'ın yerel
+ H.264 kodlayıcısı kullanılır; donanım hızlandırma garantisi verilmez.
+
+Davet tek kullanımlıktır ve 30 dakika geçerlidir. Cihaz adı kullanıcı tarafından
+ yazılır; doğrulanmış teknisyen hesabı değildir. Davet oluşturmak, karşı tarafa
+ ekran erişimi vermez; ekranı paylaşan kullanıcı ayrıca kabul eder.
+
+Cloudflare adresi geçicidir. Sunucunun çalıştığı Mac uyanık, kapağı açık ve
+ internete bağlı kalmalıdır. Adres değişirse uygulamadaki Sunucu adresini güncelleyin.
+Tünel yalnızca eşleştirme ve indirmeyi taşır; görüntü doğrudan şifreli WebRTC
+ üzerinden aktarılır. TURN yoktur; bazı ağlarda görüntü bağlantısı kurulamayabilir.
+Sunucu yetkisi yenilenemezse native gönderici paylaşımı durdurur.
+
+Gerçek Windows ekranı ve iki fiziksel cihaz arasında canlı görüntü testi halen
+ beklenir. Hata olursa iki uygulamadaki hata metnini ve test saatini iletin;
+ davet veya özel ekran içeriğini hata raporuna eklemeyin.

@@ -70,6 +70,9 @@ async fn response(mut r: reqwest::Response) -> Result<Value, String> {
             "session_expired" => "Oturum sona erdi. Yeni bir davet oluşturun.",
             "unauthorized" => "Sunucu bağlantı bilgisi geçersiz.",
             "invalid_transition" => "Oturum durumu değişti; yeniden kontrol edin.",
+            "guest_hosts_disabled" => "Bu sunucuda Windows davet oluşturma açık değil; sunucu yöneticisi pilot sürümünü güncellemeli.",
+            "creation_rate_limited" => "Çok sayıda davet oluşturuldu. Bir dakika sonra tekrar deneyin.",
+            "pilot_capacity" => "Pilot sunucusunda açık oturum sınırına ulaşıldı. Önce önceki denemeleri kapatın.",
             _ => "Sunucu isteği reddetti. Bağlantıyı kontrol edip yeniden deneyin.",
         }
         .into());
@@ -148,9 +151,9 @@ impl Connection {
             .min(40))
     }
 }
-#[cfg(target_os = "macos")]
+#[cfg(any(target_os = "macos", target_os = "windows"))]
 struct AbortOnDrop(tokio::task::AbortHandle);
-#[cfg(target_os = "macos")]
+#[cfg(any(target_os = "macos", target_os = "windows"))]
 impl Drop for AbortOnDrop {
     fn drop(&mut self) {
         self.0.abort();
@@ -217,15 +220,7 @@ pub async fn pilot_config(app: tauri::AppHandle) -> Result<Value, String> {
         .ok()
         .and_then(|d| serde_json::from_slice(&d).ok())
         .unwrap_or(json!({"serverUrl":""}));
-    config["canHost"] = json!(
-        cfg!(target_os = "macos")
-            && app
-                .path()
-                .app_local_data_dir()
-                .map_err(error)?
-                .join("pilot-host.json")
-                .is_file()
-    );
+    config["canHost"] = json!(cfg!(any(target_os = "macos", target_os = "windows")));
     config["platform"] = json!(std::env::consts::OS);
     Ok(config)
 }
@@ -233,31 +228,41 @@ pub async fn pilot_config(app: tauri::AppHandle) -> Result<Value, String> {
 pub async fn pilot_create(
     app: tauri::AppHandle,
     state: State<'_, PilotState>,
+    server_url: String,
 ) -> Result<Value, String> {
-    if !cfg!(target_os = "macos") {
-        return Err("Bu pilotta ekran kaynağı macOS uygulamasıdır.".into());
+    if !cfg!(any(target_os = "macos", target_os = "windows")) {
+        return Err("Ekran paylaşımı Windows ve macOS üzerinde kullanılabilir.".into());
     }
     let mut slot = state.connection.lock().await;
     if slot.is_some() {
         return Err("Önce mevcut denemeyi sonlandırın".into());
     }
-    let data = std::fs::read(
+    let url = validate_url(server_url.trim())?;
+    let private: Option<Value> = std::fs::read(
         app.path()
             .app_local_data_dir()
             .map_err(error)?
             .join("pilot-host.json"),
     )
-    .map_err(|_| "Yerel pilot sunucu yapılandırması bulunamadı")?;
-    let c: Value = serde_json::from_slice(&data).map_err(|_| "Pilot yapılandırması okunamadı")?;
-    let url = validate_url(c["serverUrl"].as_str().ok_or("Sunucu adresi eksik")?)?;
-    let v = response(
-        api()?
+    .ok()
+    .and_then(|data| serde_json::from_slice(&data).ok());
+    // Never send a local administration credential to a newly typed URL.
+    let admin = private
+        .as_ref()
+        .filter(|c| c["serverUrl"].as_str() == Some(url.as_str()))
+        .and_then(|c| c["createToken"].as_str());
+    let client = api()?;
+    let request = if let Some(token) = admin {
+        client
             .post(format!("{url}/pilot/create"))
-            .bearer_auth(
-                c["createToken"]
-                    .as_str()
-                    .ok_or("Sunucu kurulum anahtarı eksik")?,
-            )
+            .bearer_auth(token)
+    } else {
+        client
+            .post(format!("{url}/pilot/create-guest"))
+            .json(&json!({}))
+    };
+    let v = response(
+        request
             .send()
             .await
             .map_err(|_| "Pilot sunucusuna erişilemedi")?,
@@ -346,22 +351,29 @@ pub async fn pilot_accept(
     app: tauri::AppHandle,
     state: State<'_, PilotState>,
 ) -> Result<(), String> {
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(not(any(target_os = "macos", target_os = "windows")))]
     {
         let _ = (app, state);
-        Err("Ekran paylaşımı bu pilotta yalnızca Mac'te desteklenir".into())
+        Err("Ekran paylaşımı bu platformda desteklenmiyor".into())
     }
-    #[cfg(target_os = "macos")]
+    #[cfg(any(target_os = "macos", target_os = "windows"))]
     {
         let c = current(&state).await?;
         if c.role != "host" {
             return Err("Yerel onay yalnızca ekranı paylaşan cihazdan verilir".into());
         }
-        let helper = super::resource(&app, "dx-macos-probe")?;
-        if super::read_status(&helper)?["screenRecording"] != true {
-            return Err("Önce İzinler bölümünden ekran kaydı iznini açın".into());
-        }
+        #[cfg(target_os = "macos")]
+        let helper = {
+            let helper = super::resource(&app, "dx-macos-probe")?;
+            if super::read_status(&helper)?["screenRecording"] != true {
+                return Err("Önce İzinler bölümünden ekran kaydı iznini açın".into());
+            }
+            helper
+        };
         c.action("accept", None).await?;
+        if let Some(window) = app.get_webview_window("main") {
+            let _ = window.set_title("Ekran paylaşımı açık — dengeX Remote");
+        }
         tauri::async_runtime::spawn(async move {
             use std::sync::atomic::{AtomicU64, Ordering};
             let result=async{
@@ -380,7 +392,10 @@ pub async fn pilot_accept(
      let lease=c.verify(&active).await?;host.answer(active["answer"].clone()).await.map_err(error)?;
      let clock=std::time::Instant::now();let deadline=Arc::new(AtomicU64::new(lease*1000));
      let stream_host=host.clone();let stream_stop=stopped.clone();let stream_deadline=deadline.clone();
+     #[cfg(target_os="macos")]
      let mut stream=tokio::spawn(async move {stream_host.stream(&helper,stream_stop,stream_deadline,clock).await});
+     #[cfg(target_os="windows")]
+     let mut stream=tokio::spawn(async move {stream_host.stream_windows(stream_stop,stream_deadline,clock).await});
      let _abort=AbortOnDrop(stream.abort_handle());
      let mut tick=tokio::time::interval(Duration::from_secs(5));
      loop{tokio::select!{
@@ -398,6 +413,9 @@ pub async fn pilot_accept(
     c.stop.send_replace(true);let _=host.pc.close().await;outcome
    }.await;
             let _ = c.action("end", None).await;
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.set_title("dengeX Remote");
+            }
             if let Err(message) = result {
                 use tauri::Emitter;
                 let _ = app.emit("pilot-error", message);

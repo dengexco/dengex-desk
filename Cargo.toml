@@ -22,3 +22,7 @@ incremental = false
 [profile.test]
 debug = 0
 incremental = false
+
+# The development package still needs a fast native pixel conversion loop.
+[profile.dev.package.dengex-platform-windows]
+opt-level = 2

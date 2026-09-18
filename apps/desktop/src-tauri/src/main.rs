@@ -45,7 +45,7 @@ async fn native_status(app: tauri::AppHandle) -> Result<serde_json::Value, Strin
 #[tauri::command]
 async fn device_identity(app: tauri::AppHandle) -> Result<serde_json::Value, String> {
     if !cfg!(target_os = "macos") {
-        return Ok(serde_json::json!({"viewerOnly":true}));
+        return Ok(serde_json::json!({"unregisteredWindows":true}));
     }
     tauri::async_runtime::spawn_blocking(move || {
         let output = Command::new(resource(&app, "dx-device-identity")?).output()

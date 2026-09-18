@@ -1,5 +1,6 @@
 // Package pilot implements an isolated, attended, view-only two-device pilot.
-// It is not the tenant/OIDC product API. No anonymous room creation or input relay.
+// It is not the tenant/OIDC product API. Optional guest hosts can create only
+// their own attended, view-only rooms; they gain no access to existing devices.
 package pilot
 
 import (
@@ -30,11 +31,14 @@ type Room struct {
 	HostSeen, ViewerSeen             time.Time
 }
 type Server struct {
-	mu         sync.Mutex
-	rooms      map[string]*Room
-	createHash [32]byte
-	key        ed25519.PrivateKey
-	now        func() time.Time
+	mu              sync.Mutex
+	rooms           map[string]*Room
+	createHash      [32]byte
+	key             ed25519.PrivateKey
+	now             func() time.Time
+	AllowGuestHosts bool // Explicit deployment opt-in; configure before serving.
+	guestWindow     time.Time
+	guestCreates    int
 }
 
 func New(createToken string) (*Server, error) {
@@ -83,6 +87,7 @@ func read(r *http.Request, w http.ResponseWriter, v any) bool {
 func (s *Server) Handler() http.Handler {
 	m := http.NewServeMux()
 	m.HandleFunc("POST /pilot/create", s.create)
+	m.HandleFunc("POST /pilot/create-guest", s.createGuest)
 	m.HandleFunc("POST /pilot/join", s.join)
 	m.HandleFunc("GET /pilot/room", s.room)
 	m.HandleFunc("POST /pilot/action", s.action)
@@ -119,6 +124,36 @@ func (s *Server) create(w http.ResponseWriter, r *http.Request) {
 	if !same(tokenHash(r), s.createHash) {
 		bad(w, 401, "unauthorized")
 		return
+	}
+	s.issueRoom(w)
+}
+func (s *Server) createGuest(w http.ResponseWriter, r *http.Request) {
+	if !s.AllowGuestHosts {
+		bad(w, 403, "guest_hosts_disabled")
+		return
+	}
+	var request struct{}
+	if !read(r, w, &request) {
+		return
+	}
+	// A global bounded admission budget also covers clients behind the local
+	// Cloudflare proxy. No client-controlled forwarding header bypasses this.
+	if s.guestWindow.IsZero() || s.now().Sub(s.guestWindow) >= time.Minute {
+		s.guestWindow = s.now()
+		s.guestCreates = 0
+	}
+	if s.guestCreates >= 6 {
+		bad(w, 429, "creation_rate_limited")
+		return
+	}
+	s.guestCreates++
+	s.issueRoom(w)
+}
+func (s *Server) issueRoom(w http.ResponseWriter) {
+	for id, room := range s.rooms {
+		if room.State == "ended" {
+			delete(s.rooms, id)
+		}
 	}
 	if len(s.rooms) >= 8 {
 		bad(w, 429, "pilot_capacity")

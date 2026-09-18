@@ -19,5 +19,13 @@ assert request('/pilot/action','POST',b['token'],{'action':'accept'})[0]==409
 assert request('/pilot/action','POST',a['token'],{'action':'accept'})[0]==200
 assert request('/pilot/action','POST',a['token'],{'action':'end'})[0]==200
 assert request('/pilot/room',token=b['token'])[1]['state']=='ended'
-result={'result':'passed','url':url,'tests':['public_https_health','anonymous_creation_rejected','single_use_invitation','viewer_cannot_consent','host_consent','revocation'],'mediaTest':False,'twoDeviceTest':False}
+code,guest=request('/pilot/create-guest','POST',body={})
+assert code==201
+assert request('/pilot/create','POST',guest['token'],{})[0]==401
+code,mac=request('/pilot/join','POST',body={'invite':guest['invite'],'name':'Mac doğrulama alıcısı'})
+assert code==200
+assert request('/pilot/action','POST',mac['token'],{'action':'accept'})[0]==409
+assert request('/pilot/action','POST',guest['token'],{'action':'accept'})[0]==200
+assert request('/pilot/action','POST',guest['token'],{'action':'end'})[0]==200
+result={'result':'passed','url':'https://pilot.example.invalid','addressRedacted':True,'tests':['public_https_health','unauthenticated_admin_creation_rejected','single_use_invitation','viewer_cannot_consent','host_consent','revocation','guest_host_creation','guest_cannot_administer','guest_host_local_consent'],'mediaTest':False,'twoDeviceTest':False}
 (root/'docs/testing/evidence/cloudflare-api.json').write_text(json.dumps(result,indent=2)+'\n');print(json.dumps(result,indent=2))

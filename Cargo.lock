@@ -1085,6 +1085,7 @@ dependencies = [
  "bytes",
  "clap",
  "dengex-agent-core",
+ "dengex-platform-windows",
  "reqwest",
  "rtc",
  "serde",

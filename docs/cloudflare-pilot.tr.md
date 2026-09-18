@@ -1,6 +1,6 @@
 # Cloudflare Tunnel ve Windows görüntüleme pilotu
 
-Bu pilot Windows uygulamasından Mac ekranını izlemek içindir. Tek kullanımlık davet ve Mac'te her oturum için açık kabul gerekir. Windows'tan ekran paylaşma, uzak klavye/fare kontrolü, gerçek teknisyen hesabı/MFA, müşteri tenant kaydı, katılımsız erişim ve TURN bu pilotta yoktur. Tam ürünün tamamlandığı anlamına gelmez.
+Pilot 2, Windows veya Mac ekranını karşı bilgisayardan izlemek içindir. Bağlanılacak bilgisayar davet oluşturur ve paylaşımı ayrıca kabul eder. Uzak klavye/fare kontrolü, gerçek teknisyen hesabı/MFA, müşteri tenant kaydı, katılımsız erişim ve TURN bu pilotta yoktur. Tam ürünün tamamlandığı anlamına gelmez.
 
 ## Çalıştırma
 
@@ -33,23 +33,26 @@ Web adresi Windows paketinin indirme sayfasını sunar. `/download/windows` yaln
 
 ## Oturum akışı
 
-1. Mac'te **Cihaza bağlan → Davet oluştur**.
-2. Windows'ta aynı sunucu adresi, cihaz adı ve daveti girip istek gönderin.
-3. Mac'te cihaz adını ve yalnızca izleme iznini kontrol edip kabul edin.
-4. Ekran izni açıksa native ScreenCaptureKit/H.264 paylaşımı başlar. Windows WebView2'nin WebRTC video yüzeyi görüntüyü çözer; kareler React state/JSON/base64 üzerinden aktarılmaz.
-5. Mac'teki native **Durdur**, ana uygulamadaki **Denemeyi bitir** veya alıcıdaki bitirme düğmesi oturumu kapatır. Native paylaşım penceresi görünür kalır.
+1. Bağlanılacak Windows'ta **Cihaza bağlan → Bu bilgisayarın ekranını paylaş → Davet oluştur**.
+2. Mac'te aynı sunucu adresi, cihaz adı ve Windows'taki daveti girip istek gönderin.
+3. Windows'ta cihaz adını ve yalnızca izleme iznini kontrol edip kabul edin.
+4. Windows: DXGI → NV12 → Media Foundation H.264 → native WebRTC. İlk monitör, en fazla 1280×720; performans kabulü henüz yok. Alıcının WebView WebRTC yüzeyi görüntüyü çözer; kareler React state/JSON/base64 üzerinden aktarılmaz.
+5. **Denemeyi bitir** veya uygulamayı kapatma paylaşımı durdurur. Paylaşan uygulamanın başlığı ve oturum ekranı paylaşım durumunu gösterir.
 
-Pencereyi kapatma/uygulamadan çıkma, native helper'a açık tutulan pipe'ı kapatır. Helper parent kapanışında kendini sonlandırır. Sunucu yetkisi yenilenemezse native gönderici yerel monoton süreyi izleyerek en fazla grant süresinde durur. Renderer sayacına güvenilmez.
+Ters yönde Mac davet oluşturur ve kendi ekranı için macOS izni gerekir. Mac yalnızca Windows ekranını izliyorsa ekran kaydı izni gerekmez. Mac gönderici ScreenCaptureKit/VideoToolbox ve görünür native Durdur penceresini kullanır. Windows'ta döndürülmüş monitör, imleç birleştirme, secure desktop/RDP ve ekran değişimi sonrası otomatik toparlanma henüz yoktur.
+
+Mac helper, parent pipe kapanışında kendini sonlandırır. Windows native capture/encoder işçisi, yerel iptal ve monoton grant süresini her capture döngüsünde denetler; görüntü kuyruğu sınırlıdır. Sunucu yetkisi yenilenemezse native gönderici en fazla grant süresinde durur. Renderer sayacına güvenilmez.
 
 ## Pilot güven sınırı
 
-- Sunucu oda oluşturma anahtarı Mac Application Support ve `.artifacts/pilot/create-token` içinde yalnızca kullanıcı tarafından okunur (0600). Dağıtım paketinde veya URL'de bulunmaz.
+- Yönetim anahtarı Mac Application Support ve `.artifacts/pilot/create-token` içinde yalnızca kullanıcı tarafından okunur (0600). Dağıtım paketinde veya URL'de bulunmaz.
+- Pilot 2: `/pilot/create-guest`, yalnızca `DX_PILOT_GUEST_HOSTS=1` açıldığında hesap olmadan cihazın kendi odasını oluşturur. `pilot-server.py start` bunu pilot için açar; varsayılan API yapılandırmasında kapalıdır. Genel kabul bütçesi 6 oluşturma/dakika, toplam 8 açık odadır. İstemcinin gönderdiği IP header’larına güvenilmez. Bu bir hesap/MFA doğrulaması veya üretim DoS koruması değildir. `/pilot/create` yönetim anahtarını gerektirmeye devam eder.
 - Davet 256 bit rastgele, tek kullanımlık, oda ile sınırlı ve 30 dakika geçerlidir. Aynı anda katılma yarışında yalnızca biri kazanır. Sunucuda erişim token'larının yalnızca SHA-256 özeti tutulur.
 - Host ve viewer farklı token'lar kullanır. Alıcı host adına onay veremez. Tek alıcı, yalnızca view_screen. Genel input/file/shell komutu yoktur.
 - API, TLS sertifikasını doğrulayan native istemciden kullanılır; yönlendirmeler takip edilmez. Token Authorization header veya JSON body'dedir, sorgu parametrelerinde değildir. Browser Origin taşıyan doğrudan API istekleri reddedilir.
 - SDP fingerprint'leri sunucunun Ed25519 imzalı 45 saniyelik grant'ine; room, pilot kapsamı ve view_screen yetkisine bağlanır. Native uç, beklenen iki fingerprint'i ve imzayı mevcut SessionGate ile denetler. Yerel lease en fazla 40 saniye ve grant bitişinden kısadır.
 - Sunucu bu pilotun güvenilen otoritesidir. Üretim tenant/OIDC/cihaz enrollment otoritesi yerine geçmez. Davetli cihaz adı doğrulanmış hesap adı değildir ve UI'da böyle belirtilir.
-- Token/oda bilgileri bellektedir; API yeniden başlayınca bütün odalar geçersizleşir. En fazla 8 oda; süresi bitenler silinir. Aktif olmayan uç 60 saniyede ended olur; grant yenilemesi durur.
+- Token/oda bilgileri bellektedir; API yeniden başlayınca bütün odalar geçersizleşir. En fazla 8 açık oda; süresi bitenler silinir, ended odalar yeni davet oluşturulurken temizlenir. Aktif olmayan uç 60 saniyede ended olur; grant yenilemesi durur.
 
 ## Ağ ve sınırlar
 

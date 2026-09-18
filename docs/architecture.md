@@ -58,3 +58,21 @@ Bu sonraki akışın tamamlandığı iddia edilmez. `SessionGate` imza/kapsam/iz
 Yerel ekran testi butonu açık yerel onaydır. Önce helper’ın gerçek TCC durumu sorgulanır; izin yokken `blocked` raporu hemen döner. Sabit izin türleriyle ayrı komut CGRequestScreenCaptureAccess / AXIsProcessTrustedWithOptions çağırır ve ilgili Sistem Ayarları sayfasını açar. TCC veritabanına yazılmaz, izin atlanmaz. Başlatılmış capture boyunca native pencere ve Durdur görünürdür. Başarısız native raporları transport ve Tauri sınırlarından korunarak UI’a taşınır; focus/izin yenileme hata mesajını temizlemez.
 
 Platform referansları: [Apple Keychain](https://developer.apple.com/documentation/security/adding-a-password-to-the-keychain), [CryptoKit Signing.PrivateKey](https://developer.apple.com/documentation/cryptokit/curve25519/signing/privatekey), [CGRequestScreenCaptureAccess](https://developer.apple.com/documentation/coregraphics/cgrequestscreencaptureaccess()).
+
+## Pilot 2: Windows gönderici
+
+Windows ilk DXGI output'unu yalnızca yerel kabul ve imzalı grant doğrulandıktan
+sonra açar. COM ve Media Foundation tek native işçide çalışır. BGRA görüntü
+1280×720 sınırında NV12'ye dönüştürülür; inbox H.264 encoder Baseline profil,
+düşük gecikme ve periyodik keyframe ile Annex B üretir. Parametre setleri RTP
+sample'ına eklenir. Native WebRTC üzerinden gönderilen kareler JavaScript'e
+aktarılmaz. Worker iptal, yerel monoton süre ve kapanan sınırlı kanal ile durur.
+Windows uygulama kapanışı ayrıca stop işaretini ayarlar.
+
+Alıcı Mac, Windows davetini girer; Mac'in ekran izni istenmez. Alıcı WebView
+WebRTC yüzeyi kullanır. Davet oluşturma ve yerel kabul ekranları platforma
+özgü yön varsaymaz. Sunucudaki opt-in guest oda oluşturma akışı mevcut odalara
+ve yönetim API'sine erişim vermez; 6/dakika ve 8 açık oda sınırları vardır.
+
+Kaynaklar: [Microsoft H.264 encoder](https://learn.microsoft.com/en-us/windows/win32/medfound/h-264-video-encoder),
+[Annex B sequence header](https://learn.microsoft.com/en-us/windows/win32/medfound/mf-mt-mpeg-sequence-header-attribute).
