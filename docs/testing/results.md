@@ -73,3 +73,32 @@ Tam ürün için kalan işler: [öncelikli liste](../remaining-work.tr.md).
 - Bu pilot yalnızca davetli Windows → Mac ekran izleme için hazırlanmıştır. Uzak input, Windows host, tenant/OIDC/MFA, kalıcı cihaz kaydı ve TURN bağlı değildir. Mac uykuya girer veya sunucu/tünel kapanırsa hizmet erişilemez.
 
 Kurulum ve durdurma: [Cloudflare pilot kılavuzu](../cloudflare-pilot.tr.md).
+
+## 18 Eylül: Pilot 2 — Windows ekranına Mac'ten bağlanma
+
+Önceki Pilot 1 paketi yalnızca Windows alıcı / Mac gönderici yönündeydi.
+Pilot 2, Windows'un davet oluşturmasını ve kendi ekranını paylaşmasını ekler.
+Mac alıcı bu akışta ekran kaydı izni istemez.
+
+- Windows DXGI yakalama, en fazla 1280×720 BGRA→NV12 dönüşümü ve Windows inbox
+  Media Foundation H.264 encoder native WebRTC göndericiye bağlandı. Encoder
+  Baseline, düşük gecikme ve periyodik keyframe kullanır; Annex B parametre
+  setleri sample'a eklenir. İlk monitör; döndürme/imleç birleştirme/RDP/secure
+  desktop kabulü yoktur. 20 fps hedefi performans ölçümü değildir.
+- Windows hedefi için desktop/platform/transport çapraz derleyici ve Clippy
+  `-D warnings` kontrolleri geçti. Mac'te core, desktop ve piksel dönüşüm
+  testleri ile desktop/transport Clippy geçti; frontend paketlemede doğrulandı.
+- GitHub Windows runner üzerinde `cargo test -p dengex-platform-windows`
+  başarılı: sentetik NV12 karelerden H.264 SPS/PPS/IDR çıktısı üretildi.
+  Bu test gerçek Windows masaüstünü yakalamaz. [CI çalışması](https://github.com/dengexco/dengex-desk/actions/runs/35335757694).
+- Sunucuda opt-in guest host akışı, altı davet/dakika ve sekiz açık oda sınırı;
+  host/viewer onay ayrımı ve mevcut odaların izolasyonu Go race testleriyle geçti.
+  Yönetim anahtarı istemciye dağıtılmaz. Mevcut admin oluşturma yetkisi korunur.
+- Canlı HTTPS üzerinden guest davet, guest'in yönetim erişiminin reddi, viewer'ın
+  host adına onay verememesi ve iptal doğrulandı. [Kanıt](evidence/cloudflare-api.json).
+- Windows yakalama işçisi native iptal ve monoton yetki süresini denetler.
+  Uygulama kapanışı stop işaretini verir; bounded kanal ve drop guard işçiyi
+  kapatır. Kareler React/JSON/base64 üzerinden geçirilmez.
+
+Gerçek hedef Windows'ta açılış, ekran yakalama ve Mac'e canlı görüntü aktarımı
+henüz kabul edilmedi. İmzalı kurulum, uzak input ve TURN hâlâ bu pilotun dışındadır.

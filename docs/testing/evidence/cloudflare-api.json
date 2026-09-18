@@ -1,13 +1,17 @@
 {
   "result": "passed",
   "url": "https://pilot.example.invalid",
+  "addressRedacted": true,
   "tests": [
     "public_https_health",
-    "anonymous_creation_rejected",
+    "unauthenticated_admin_creation_rejected",
     "single_use_invitation",
     "viewer_cannot_consent",
     "host_consent",
-    "revocation"
+    "revocation",
+    "guest_host_creation",
+    "guest_cannot_administer",
+    "guest_host_local_consent"
   ],
   "mediaTest": false,
   "twoDeviceTest": false

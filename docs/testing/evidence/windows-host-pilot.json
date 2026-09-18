@@ -1,0 +1,12 @@
+{
+  "version": "0.1.0-pilot.2",
+  "windowsCrossCheck": "passed",
+  "windowsClippy": "passed",
+  "macosClippy": "passed",
+  "goRaceTests": "passed",
+  "publicGuestInvitationConsentRevoke": "passed",
+  "windowsEncoderSyntheticTest": "passed_on_github_windows_runner",
+  "ciRunURL": "https://github.com/dengexco/dengex-desk/actions/runs/35335757694",
+  "windowsCaptureRuntimeTest": false,
+  "physicalTwoDeviceVideoTest": false
+}
