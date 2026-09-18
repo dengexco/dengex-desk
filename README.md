@@ -4,6 +4,18 @@ Windows ve macOS için Tauri, Rust, Swift ve Go ile geliştirilen uzaktan destek
 
 **Geliştirme aşamasındadır; üretime hazır değildir.** Native laboratuvar araçları ve davet/onay ile Windows'tan Mac ekranını izlemeyi hedefleyen pilot akış mevcuttur. Windows'ta çalıştırma ve iki fiziksel cihaz arasında canlı görüntü kabulü henüz tamamlanmadı.
 
+## Windows uygulamasını indir
+
+**[Windows x64 ZIP paketini indir](https://github.com/dengexco/dengex-desk/releases/download/v0.1.0-pilot.1/dengeX-Remote-Windows-x64.zip)**
+
+1. `dengeX-Remote-Windows-x64.zip` dosyasının tamamını bir klasöre çıkartın.
+2. İçindeki **`dengeX Remote.exe`** uygulamasını açın; `resources` klasörünü yanında tutun.
+3. **Cihaza bağlan** bölümünde Mac kullanıcısından aldığınız daveti girin.
+
+[Sürüm sayfasında](https://github.com/dengexco/dengex-desk/releases/tag/v0.1.0-pilot.1) EXE, kullanım adımları ve SHA-256 dosyası da bulunur. **Source code (zip)** geliştiriciler içindir; Windows'ta çalıştırılacak uygulama paketi yukarıdaki ZIP'tir. Tek EXE indirilirse sunucu adresini uygulamaya elle girmek gerekir.
+
+Windows 11 x64 hedeflenir; Microsoft Edge WebView2 Runtime gereklidir. Paket imzasız bir pilot sürümdür. İçindeki Cloudflare test adresi geçicidir; Mac ve pilot sunucusu açık kalmalıdır. Bu pilot yalnızca Windows'tan Mac ekranı izleme içindir.
+
 Gerçek macOS ekran yakalama, VideoToolbox H.264 encode/decode, yerel WebRTC taşıma, native görüntü sunumu, Türkçe metin/fare deneyi ve native güvenlik çekirdeği geliştirildi. Sahte uzaktan bağlantı, örnek ekran videosu veya uydurma cihaz listesi yoktur. Ürün rotaları entegrasyon tamamlanana kadar 503 döner.
 
 - [Gerçek doğrulama sonuçları ve sınırları](docs/testing/results.md)
@@ -15,7 +27,7 @@ Gerçek macOS ekran yakalama, VideoToolbox H.264 encode/decode, yerel WebRTC ta�
 - [Ürün gereksinimleri](docs/requirements.tr.txt)
 - [Katkıda bulunma](CONTRIBUTING.md)
 
-Bu depo kaynak kodu ve belgeleri içerir. Derleme çıktıları, çalışma zamanı anahtarları ve canlı pilot sunucu adresi Git'e eklenmez. Paketler yerelde `.artifacts/releases/` altında üretilir.
+Git geçmişi kaynak kodu ve belgeleri içerir. Derleme çıktıları ve çalışma zamanı anahtarları Git'e eklenmez. İndirilebilir uygulamalar Releases bölümünde ayrı dosyalar olarak yayımlanır. İlk pilot ZIP yalnızca public test sunucusu adresini içerir; davet veya sunucu yönetim anahtarı içermez.
 
 ## Cloudflare ve Windows görüntüleme pilotu
 
@@ -27,7 +39,7 @@ Bu depo kaynak kodu ve belgeleri içerir. Derleme çıktıları, çalışma zama
 - Mac: **Cihaza bağlan → Davet oluştur**. Windows: sunucu adresi/davet ile istek. Mac: gelen isteği kabul.
 - Public HTTPS üzerinden davet, tekrar kullanımın reddi, host onayı ve sonlandırma kontrolleri [geçti](docs/testing/evidence/cloudflare-api.json). Bu sonuç Windows runtime veya iki fiziksel cihaz kabulü değildir.
 
-## Paketi açma
+## macOS geliştirme paketini açma
 
 ZIP'i açıp `dengeX Remote Lab.app` uygulamasını çalıştırın. Son kullanıcıda Node.js, Rust veya Go gerekmez. Paket **ad-hoc geliştirme imzalıdır; Developer ID/notarization yoktur**, production dağıtımı değildir. Sistem güvenlik uyarısını otomatik atlayan kurulum betiği kullanılmaz.
 
@@ -80,7 +92,7 @@ Go süreç denemesi: `cd services/api && DX_LISTEN=127.0.0.1:18432 go run ./cmd/
 
 Windows üzerinde kaynak derlemesi için Node/Rust/MSVC araçları hazırken önce `apps/desktop/src-tauri/resources/pilot-server.example.json` dosyasını aynı klasörde `pilot-server.json` adıyla kopyalayın; var olan yerel yapılandırmayı değiştirmeyin. Ardından `npm ci`, `npm run build` ve `cargo build --locked --target x86_64-pc-windows-msvc -p dengex-desktop --features tauri/custom-protocol` çalıştırın. `rustup target add x86_64-pc-windows-msvc` ile hedef kurulabilir. Sunucu adresi boşken uygulama açılır; pilot ekranında kendi HTTPS sunucunuzun adresi girilir. `scripts/package-windows-cross.sh`, ilk geliştirme ortamındaki yerel cargo-xwin/LLVM/SDK araçlarına bağlıdır; temiz klon için otomatik araç kurucusu değildir.
 
-Cloudflare pilotunu çalıştırmak için [ayrı kurulum belgesini](docs/cloudflare-pilot.tr.md) izleyin. Canlı test adresi ve oturum davetleri bu depodan dağıtılmaz.
+Cloudflare pilotunu çalıştırmak için [ayrı kurulum belgesini](docs/cloudflare-pilot.tr.md) izleyin. Oturum davetleri ve özel anahtarlar depodan veya Releases üzerinden dağıtılmaz. İlk Windows pilot ZIP'indeki public test adresi kalıcı bir ortak hizmet değildir; kendi sunucunuzu kullanabilirsiniz.
 
 ## Sıradaki kabul kapısı
 
