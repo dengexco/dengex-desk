@@ -1,0 +1,18 @@
+{
+ "$schema":"https://json-schema.org/draft/2020-12/schema",
+ "$id":"urn:dengex:input:v1",
+ "title":"Input packet — reliable critical channel / latest-only pointer channel",
+ "type":"object","additionalProperties":false,
+ "required":["v","session_id","epoch","sequence","event"],
+ "properties":{
+  "v":{"const":1},"session_id":{"type":"string","minLength":1,"maxLength":64},
+  "epoch":{"type":"integer","minimum":0},"sequence":{"type":"integer","minimum":1},
+  "event":{"oneOf":[
+   {"type":"object","additionalProperties":false,"required":["type","x","y","monitor"],"properties":{"type":{"const":"pointer"},"x":{"type":"number","minimum":0,"maximum":1},"y":{"type":"number","minimum":0,"maximum":1},"monitor":{"type":"integer","minimum":0,"maximum":4294967295}}},
+   {"type":"object","additionalProperties":false,"required":["type","button","down"],"properties":{"type":{"const":"button"},"button":{"type":"integer","minimum":0,"maximum":2},"down":{"type":"boolean"}}},
+   {"type":"object","additionalProperties":false,"required":["type","usage","down"],"properties":{"type":{"const":"key"},"usage":{"type":"integer","minimum":4,"maximum":231},"down":{"type":"boolean"}}},
+   {"type":"object","additionalProperties":false,"required":["type","text"],"properties":{"type":{"const":"text"},"text":{"type":"string","minLength":1,"maxLength":512,"description":"Native parser additionally caps UTF-8 to 512 bytes and rejects NUL."}}},
+   {"type":"object","additionalProperties":false,"required":["type","x","y"],"properties":{"type":{"const":"wheel"},"x":{"type":"integer","minimum":-1200,"maximum":1200},"y":{"type":"integer","minimum":-1200,"maximum":1200}}}
+  ]}
+ }
+}

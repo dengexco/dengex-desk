@@ -1,0 +1,7 @@
+{
+  "engine": "webrtc-rs 0.20.5",
+  "reason": "TURN_TCP_TLS_UNSUPPORTED: webrtc-rs 0.20.5 currently gathers UDP TURN only; direct fallback is forbidden in relay mode",
+  "result": "failed",
+  "schemaVersion": 1,
+  "twoDeviceTest": false
+}

@@ -1,0 +1,12 @@
+{
+  "codecTest": false,
+  "engine": "webrtc-rs 0.20.5",
+  "experiment": "local_webrtc_data_channel",
+  "handshakeAndEchoMs": 372,
+  "inputTest": false,
+  "relayRequired": false,
+  "result": "passed",
+  "schemaVersion": 1,
+  "screenCaptureTest": false,
+  "twoDeviceTest": false
+}

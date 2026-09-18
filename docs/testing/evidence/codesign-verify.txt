@@ -1,0 +1,2 @@
+target/debug/bundle/macos/dengeX Remote Lab.app: valid on disk
+target/debug/bundle/macos/dengeX Remote Lab.app: satisfies its Designated Requirement

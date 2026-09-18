@@ -1,0 +1,13 @@
+{
+  "date": "2026-09-18",
+  "packagedApp": true,
+  "identityStableAcrossRestart": true,
+  "supportId": "[cihaz kimliği çıkarıldı]",
+  "registration": "local_only",
+  "permissionFailureVisible": true,
+  "screenSettingsOpened": true,
+  "desktopRegressionTestsPassed": 2,
+  "typescriptBuild": "passed",
+  "clippy": "passed",
+  "twoDeviceTest": false
+}

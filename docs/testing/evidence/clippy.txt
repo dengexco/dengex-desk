@@ -1,0 +1,2 @@
+    Checking dengex-transport v0.1.0 (<workspace>/native/transport)
+    Finished `dev` profile [unoptimized] target(s) in 1.64s

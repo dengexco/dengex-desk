@@ -1,0 +1,49 @@
+dengeX Remote — iki bilgisayarda ilk deneme
+
+HEDEF WINDOWS BİLGİSAYARINDA
+1. dengeX-Remote-Windows-x64.zip dosyasının tamamını bir klasöre çıkartın.
+2. İçindeki dengeX Remote.exe uygulamasını açın. resources klasörünü koruyun.
+3. Cihaza bağlan bölümünü açın. Sunucu adresi hazır gelir.
+4. Kendi bilgisayarınız için tanınabilir bir Cihaz adı yazın.
+5. Mac'ten verilen tek kullanımlık daveti girin ve Bağlantı isteği gönder'e basın.
+
+MAC BİLGİSAYARINDA
+1. Ekran paylaşma testine hazır olduğunuzda İzinler > Ekran iznini aç yolunu
+   kullanın. macOS isterse uygulamayı kapatıp yeniden açın. Bu izleme denemesi
+   için klavye/fare izni gerekli değildir.
+2. Cihaza bağlan > Davet oluştur. Daveti hedef Windows kullanıcısına iletin.
+   Davet tek kullanımlıktır ve 30 dakika geçerlidir.
+3. Windows bağlantı isteğini gönderince cihaz adını kontrol edin ve
+   Ekranımı paylaşmayı kabul et'e basın.
+
+TESTİN BAŞARILI SAYILMASI İÇİN
+- Mac, Windows'un bağlantı isteğini göstermeli.
+- Kabulden önce Windows'ta Mac ekranı görünmemeli.
+- Kabulden sonra Windows'ta gerçek Mac ekranı görünmeli. Mac'te bir pencereyi
+  hareket ettirerek görüntünün canlı olduğunu kontrol edin.
+- Mac'teki Durdur veya Denemeyi bitir, Windows'taki görüntüyü kapatmalı.
+- Yeniden deneme için yeni davet oluşturulmalı.
+
+EKRAN İZNİ HENÜZ AÇILMADIYSA
+Windows uygulamasının açılması ve bağlantı isteğinin Mac'e ulaşması denenebilir.
+Görüntü testi Mac ekran izni verildikten sonra yapılabilir. Uygulama izin için
+yeniden başlatılırsa eski davet yerine yeni davet oluşturun.
+
+BİR ADIM ÇALIŞMAZSA
+- Uygulama hiç açılmıyorsa: Windows sürümünü ve görünen hata metnini not edin.
+  Microsoft Edge WebView2 Runtime gereklidir; resmi indirme adresi paketteki
+  BENI-OKU.txt içindedir. Windows güvenlik korumalarını kapatmayın.
+- Sunucuya erişilemiyorsa: Mac'in açık ve internete bağlı olduğunu kontrol edin.
+  Mac uygulamasındaki güncel Sunucu adresini Windows'a aynen yazın.
+- Davet reddedilirse: Mac'te yeni davet oluşturun; eski daveti tekrar kullanmayın.
+- Kabulden sonra görüntü gelmezse: iki uygulamadaki hata metnini ve denemenin
+  saatini not edin. Bu pilotta TURN yoktur; bazı ağlarda doğrudan görüntü
+  bağlantısı kurulamayabilir. Tünelin erişilebilir olması görüntüyü garanti etmez.
+- Hata bildirirken davet kodunu veya özel ekran içeriğini paylaşmayın.
+
+KAPSAM
+Bu paket Windows'tan Mac ekranını izlemek içindir. Windows ekranı paylaşma,
+uzak klavye/fare kontrolü, dosya/pano aktarımı ve katılımsız erişim içermez.
+İmzasız geliştirme paketidir. Gerçek Windows açılış ve iki cihaz arasında canlı
+görüntü testi henüz yapılmadı; bu denemenin amacı bunları doğrulamaktır.
+Mac'in kapağı açık, bilgisayar uyanık ve internet bağlantısı açık kalmalıdır.

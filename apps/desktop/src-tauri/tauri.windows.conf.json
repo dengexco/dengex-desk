@@ -1,0 +1,5 @@
+{
+  "productName": "dengeX Remote",
+  "bundle": {"resources": ["resources/pilot-server.json"], "targets": ["nsis"]},
+  "app": {"windows": [{"title": "dengeX Remote — Windows Pilot", "width": 1140, "height": 800, "minWidth": 800, "minHeight": 680}]}
+}

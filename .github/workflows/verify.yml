@@ -1,0 +1,96 @@
+name: Verify source and native builds
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  core:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-14]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.98.1
+          components: clippy,rustfmt
+      - run: cargo test --locked -p dengex-agent-core
+      - run: cargo check --locked -p dengex-platform-windows
+      - run: cargo build --locked -p dengex-transport
+      - run: cargo run --locked -p dengex-transport -- transport --report transport.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: transport-${{ matrix.os }}
+          path: transport.json
+  go:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: services/api/go.mod
+          cache: false
+      - run: go test -race ./...
+        working-directory: services/api
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npm audit --audit-level=high
+      - run: npm sbom --sbom-format=cyclonedx > sbom-npm.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: npm-sbom
+          path: sbom-npm.json
+  postgres:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 scripts/init-lab-secrets.py
+      - run: docker compose -f infra/compose.yaml up -d --wait postgres
+      - run: docker compose -f infra/compose.yaml exec -T postgres psql -v ON_ERROR_STOP=1 -U dengex_migrator -d dengex < services/api/migrations/001_initial.sql
+      - run: bash scripts/test-postgres.sh
+      - if: always()
+        run: docker compose -f infra/compose.yaml down --volumes
+  macos-helper:
+    strategy:
+      matrix:
+        target: [arm64-apple-macosx14.0, x86_64-apple-macosx14.0]
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - run: mkdir -p .artifacts/native
+      - run: swiftc -swift-version 5 -O -target ${{ matrix.target }} native/platform-macos/Sources/Probe.swift -framework AppKit -framework ScreenCaptureKit -framework VideoToolbox -framework CoreMedia -framework CoreImage -framework ApplicationServices -o .artifacts/native/dx-macos-probe
+      - run: swiftc -swift-version 5 -O -target ${{ matrix.target }} native/platform-macos/Sources/DeviceIdentity.swift -framework Foundation -framework Security -framework CryptoKit -o .artifacts/native/dx-device-identity
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-helper-${{ matrix.target }}
+          path: .artifacts/native/dx-*
+      - run: echo 'Interactive desktop, screen permission, native input, Intel execution and two-device acceptance require manual native environments.'
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.98.1
+      - run: cargo install cargo-audit --locked
+      - run: cargo audit
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: mkdir -p .artifacts && cargo metadata --locked --format-version 1 > .artifacts/cargo-metadata.json
+      - run: python3 scripts/sbom.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rust-sboms
+          path: .artifacts/sbom-rust.json

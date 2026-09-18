@@ -1,0 +1,14 @@
+{
+  "healthz": {
+    "status": 200,
+    "body": "{\"phase\":0,\"remoteSupportReady\":false,\"status\":\"ok\"}\n"
+  },
+  "readyz": {
+    "status": 503,
+    "body": "control_plane_not_integrated\n"
+  },
+  "v1/sessions": {
+    "status": 503,
+    "body": "{\"error\":\"control_plane_not_integrated\"}\n"
+  }
+}

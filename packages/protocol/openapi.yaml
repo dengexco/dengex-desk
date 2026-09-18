@@ -1,0 +1,20 @@
+openapi: 3.1.0
+info:
+  title: dengeX Remote — Phase 0 health service
+  version: 0.1.0
+  description: Only health endpoints are implemented. All /v1/* business routes return 503. No authentication bypass or mock success is provided.
+servers:
+  - url: http://127.0.0.1:8080
+paths:
+  /healthz:
+    get:
+      operationId: liveness
+      responses:
+        '200':
+          description: Process is alive; remoteSupportReady is always false in phase 0.
+  /readyz:
+    get:
+      operationId: readiness
+      responses:
+        '503':
+          description: OIDC, PostgreSQL persistence, device identity and signaling integration pending.

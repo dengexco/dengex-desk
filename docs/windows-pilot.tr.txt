@@ -1,0 +1,31 @@
+dengeX Remote — Windows x64 görüntüleme pilotu
+
+Bu geliştirme paketi Windows sertifikasıyla imzalanmamıştır. Windows 11 x64
+hedeflenir; gerçek Windows cihazında çalışma testi kullanıcı tarafından yapılacak.
+SmartScreen veya Defender'ı kapatmayın. Kurumsal politikada çalıştırma engellenirse
+BT yöneticinizin onaylı dağıtım sürecini kullanın.
+
+1. ZIP'in tamamını bir klasöre çıkartın; resources klasörünü silmeyin.
+2. dengeX Remote.exe dosyasını çalıştırın. Rust/Node/Go gerekmez.
+   Microsoft Edge WebView2 Runtime gereklidir. Eksikse Microsoft'un resmi
+   WebView2 indirme sayfasındaki Evergreen Runtime x64 kurulumunu kullanın:
+   https://developer.microsoft.com/microsoft-edge/webview2/
+3. Cihaza bağlan bölümüne geçin. Sunucu adresi doldurulmuş gelir.
+4. Mac uygulamasında Cihaza bağlan > Davet oluştur. Gösterilen daveti
+   Windows'taki Davet kodu alanına girin ve bağlantı isteği gönderin.
+5. Mac kullanıcısı gelen cihaz adını kontrol edip Ekranımı paylaşmayı kabul et
+   düğmesine basar. Ekran kaydı izni gerekir; sistem ayarları uygulamadan açılır.
+6. Windows'ta gerçek Mac ekranı açılır. Denemeyi bitir her iki uçta oturumu keser.
+
+Bu pilot yalnızca Windows -> Mac ekran izleme destekler. Windows ekranını
+paylaşma, klavye/fare kontrolü, dosya/pano, hesap/MFA ve katılımsız erişim yoktur.
+Cihaz adı kullanıcı tarafından yazılır, doğrulanmış teknisyen hesabı değildir.
+Davet tek kullanımlıktır; bir deneme en fazla 30 dakika sürer. Yeniden bağlanmak
+veya reddedilen isteği tekrarlamak için Mac'te yeni davet oluşturun.
+
+Cloudflare adresi geçicidir; Mac ve pilot sunucusu açık kalmalıdır. Tünel yeniden
+başlatılırsa adres değişebilir; Mac'teki güncel adresi Windows'a girin.
+Cloudflare tüneli eşleştirme HTTPS trafiğini taşır; görüntü doğrudan WebRTC ile
+DTLS/SRTP şifrelenir. Bu kurulumda TURN yoktur. Kısıtlı/simetrik NAT ağlarda
+sunucuya ulaşılırken görüntü bağlantısı başarısız olabilir; ayrı TURN gerekir.
+Oturum yetkisi yenilenemezse görüntü kapatılır. Paylaşım gizli çalışmaz.

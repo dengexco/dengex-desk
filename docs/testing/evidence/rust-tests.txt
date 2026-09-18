@@ -1,0 +1,33 @@
+    Blocking waiting for file lock on build directory
+   Compiling dengex-agent-core v0.1.0 (<workspace>/native/agent-core)
+    Finished `test` profile [unoptimized] target(s) in 4.10s
+     Running unittests src/lib.rs (target/debug/deps/dengex_agent_core-4a9733a2b53f229d)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/security.rs (target/debug/deps/security-c2c78fb228c79377)
+
+running 13 tests
+test final_states_cannot_reopen ... ok
+test dangerous_filenames_rejected ... ok
+test lease_must_not_exceed_sixty_seconds ... ok
+test tenant_scope_cannot_be_swapped ... ok
+test stale_input_and_disconnect_fail_closed ... ok
+test missing_os_permission_denies_capture ... ok
+test previous_connection_input_cannot_enter_a_new_grant ... ok
+test tampered_signed_payload_is_rejected ... ok
+test replay_and_expiry_rejected ... ok
+test view_only_denies_all_other_channels_and_expires_without_server ... ok
+test invalid_coordinates_denied ... ok
+test arbitrary_filenames_never_panic ... ok
+test arbitrary_protocol_bytes_never_panic ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.37s
+
+   Doc-tests dengex_agent_core
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s

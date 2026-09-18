@@ -1,0 +1,14 @@
+{
+  "result": "passed",
+  "sha256": "3c530b3cf54c6f9a06ee0c1e2047b7f0ae6d7700b5985b48522d73e03e957791",
+  "bytes": 5998179,
+  "files": [
+    "dengeX Remote/BENI-OKU.txt",
+    "dengeX Remote/dengeX Remote.exe",
+    "dengeX Remote/resources/pilot-server.json"
+  ],
+  "serverUrl": "https://pilot.example.invalid",
+  "windowsRuntimeTest": false,
+  "macScreenPermission": "awaiting_user",
+  "remoteMediaTest": "not_run_in_current_package"
+}

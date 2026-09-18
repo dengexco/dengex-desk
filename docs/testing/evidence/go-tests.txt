@@ -1,0 +1,2 @@
+?   	dengex.local/remote/api/cmd/api	[no test files]
+ok  	dengex.local/remote/api/internal/domain	(cached)

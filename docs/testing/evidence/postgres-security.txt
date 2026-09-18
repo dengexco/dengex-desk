@@ -1,0 +1,23 @@
+BEGIN
+CREATE ROLE
+GRANT
+GRANT
+INSERT 0 2
+INSERT 0 2
+SET
+DO
+              set_config
+--------------------------------------
+ 00000000-0000-0000-0000-000000000001
+(1 row)
+
+DO
+RESET
+INSERT 0 1
+DO
+ROLLBACK
+DO
+                                         result
+-----------------------------------------------------------------------------------------
+ PASS: tenant reads/writes, composite FK, append-only audit, transaction context cleanup
+(1 row)

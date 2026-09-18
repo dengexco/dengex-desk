@@ -1,0 +1,12 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "dengeX Remote Lab",
+  "version": "0.1.0",
+  "identifier": "com.dengex.remote.lab",
+  "build": {"beforeDevCommand": "npm run dev", "devUrl": "http://127.0.0.1:1420", "beforeBuildCommand": "npm run build", "frontendDist": "../dist"},
+  "app": {
+    "windows": [{"title": "dengeX Remote", "width": 1140, "height": 800, "minWidth": 800, "minHeight": 680}],
+    "security": {"csp": "default-src 'self'; connect-src ipc: http://ipc.localhost; img-src 'self' asset: http://asset.localhost data:; style-src 'self' 'unsafe-inline'; script-src 'self'"}
+  },
+  "bundle": {"active": true, "targets": ["app"], "resources": ["resources/*"], "macOS": {"minimumSystemVersion": "14.0", "infoPlist": "Info.plist"}, "shortDescription": "Native doğrulama paketi — geliştirme sürümü"}
+}

@@ -1,0 +1,1 @@
+{"codec":"H264","decodedFrames":0,"elapsedSeconds":11.402081966400146,"encodedBytes":494643,"encodedFrames":85,"experiment":"local_webrtc_loopback","hardwareEncoder":true,"height":1080,"inputTest":false,"reason":"no_decoded_frames","renderDrops":0,"result":"failed","schemaVersion":1,"twoDeviceTest":false,"width":1920}

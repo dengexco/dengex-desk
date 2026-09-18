@@ -1,0 +1,6 @@
+/** Version 1 wire vocabulary. This is not a claim that every capability ships. */
+export type Capability = 'view_screen' | 'control_input' | 'clipboard_read' | 'clipboard_write' | 'file_send' | 'file_receive' | 'restart_device' | 'manage_unattended_access' | 'manage_devices' | 'view_audit';
+export type SessionState = 'requested' | 'awaiting_consent' | 'negotiating' | 'authenticating' | 'active' | 'reconnecting' | 'ended' | 'failed';
+export interface NativeStatus { platform: string; screenRecording: boolean; accessibility: boolean; os?: string; unsupported?: boolean; }
+export interface DeviceIdentity { schemaVersion: 1; deviceId: string; supportId: string; publicKey: string; keyAlgorithm: 'Ed25519'|'none'; createdAt: string; deviceName: string; storage: string; registration: 'local_only'; }
+export interface ProbeReport { schemaVersion: 1; experiment: string; result: 'passed'|'failed'|'blocked'; reason?: string; twoDeviceTest: false; handshakeAndEchoMs?: number; receivedAccessUnits?: number; syntheticSource?: boolean; native?: { encodedFrames:number; decodedFrames:number; width:number; height:number; hardwareEncoder:boolean; elapsedSeconds:number }; unicodeTextVerified?: boolean; mouseClickVerified?: boolean; }

@@ -1,0 +1,10 @@
+{
+  "checkedAt": "2026-09-18T10:12:17.540822+00:00",
+  "downloadURL": "https://pilot.example.invalid/download/windows",
+  "bytes": 5998179,
+  "sha256": "3c530b3cf54c6f9a06ee0c1e2047b7f0ae6d7700b5985b48522d73e03e957791",
+  "archiveIntegrity": "passed",
+  "publicConfigMatches": true,
+  "windowsRuntimeTest": false,
+  "remoteMediaTest": false
+}

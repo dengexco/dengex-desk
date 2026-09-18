@@ -1,0 +1,16 @@
+{
+  "name": "dengex-remote",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/desktop",
+    "packages/protocol"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @dengex/desktop",
+    "build": "npm run build -w @dengex/desktop",
+    "typecheck": "npm run typecheck -w @dengex/desktop",
+    "desktop": "npm run tauri -w @dengex/desktop --"
+  },
+  "license": "MIT"
+}

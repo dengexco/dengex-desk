@@ -1,0 +1,29 @@
+{
+  "droppedAccessUnits": 0,
+  "engine": "webrtc-rs 0.20.5",
+  "experiment": "local_webrtc_native",
+  "handshakeAndEchoMs": 267,
+  "native": {
+    "codec": "H264",
+    "decodedFrames": 89,
+    "elapsedSeconds": 16.107878923416138,
+    "encodedBytes": 599844,
+    "encodedFrames": 90,
+    "experiment": "local_webrtc_loopback",
+    "hardwareEncoder": true,
+    "height": 180,
+    "inputTest": false,
+    "reason": "completed",
+    "renderDrops": 3,
+    "result": "passed",
+    "schemaVersion": 1,
+    "twoDeviceTest": false,
+    "width": 320
+  },
+  "receivedAccessUnits": 89,
+  "relayRequired": false,
+  "result": "passed",
+  "schemaVersion": 1,
+  "syntheticSource": true,
+  "twoDeviceTest": false
+}

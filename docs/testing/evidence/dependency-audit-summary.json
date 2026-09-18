@@ -1,0 +1,51 @@
+{
+  "vulnerabilities": 0,
+  "warnings": {
+    "unmaintained": [
+      {
+        "package": "proc-macro-error",
+        "version": "1.0.4",
+        "id": "RUSTSEC-2024-0370",
+        "title": "proc-macro-error is unmaintained"
+      },
+      {
+        "package": "unic-char-property",
+        "version": "0.9.0",
+        "id": "RUSTSEC-2025-0081",
+        "title": "`unic-char-property` is unmaintained"
+      },
+      {
+        "package": "unic-char-range",
+        "version": "0.9.0",
+        "id": "RUSTSEC-2025-0075",
+        "title": "`unic-char-range` is unmaintained"
+      },
+      {
+        "package": "unic-common",
+        "version": "0.9.0",
+        "id": "RUSTSEC-2025-0080",
+        "title": "`unic-common` is unmaintained"
+      },
+      {
+        "package": "unic-ucd-ident",
+        "version": "0.9.0",
+        "id": "RUSTSEC-2025-0100",
+        "title": "`unic-ucd-ident` is unmaintained"
+      },
+      {
+        "package": "unic-ucd-version",
+        "version": "0.9.0",
+        "id": "RUSTSEC-2025-0098",
+        "title": "`unic-ucd-version` is unmaintained"
+      }
+    ],
+    "unsound": [
+      {
+        "package": "glib",
+        "version": "0.18.5",
+        "id": "RUSTSEC-2024-0429",
+        "title": "Unsoundness in `Iterator` and `DoubleEndedIterator` impls for `glib::VariantStrIter`"
+      }
+    ]
+  }
+}

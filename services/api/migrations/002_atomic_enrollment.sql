@@ -1,0 +1,11 @@
+-- Transaction fragment (reference contract, not an executable migration):
+-- BEGIN;
+-- SELECT set_config('app.tenant_id', $1, true);
+-- UPDATE enrollment_tokens SET consumed_at=now()
+-- WHERE tenant_id=$1::uuid AND token_hash=$2::bytea
+--   AND consumed_at IS NULL AND revoked_at IS NULL AND expires_at>now()
+-- RETURNING tenant_id, group_id;
+-- Require exactly one row; insert the device and public key in this SAME
+-- transaction. Any duplicate key/validation failure ROLLBACKs consumption.
+-- COMMIT;
+-- Do not split consumption and device insertion across separate transactions.

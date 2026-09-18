@@ -1,0 +1,14 @@
+{
+  "result": "passed",
+  "url": "https://pilot.example.invalid",
+  "tests": [
+    "public_https_health",
+    "anonymous_creation_rejected",
+    "single_use_invitation",
+    "viewer_cannot_consent",
+    "host_consent",
+    "revocation"
+  ],
+  "mediaTest": false,
+  "twoDeviceTest": false
+}

@@ -1,0 +1,603 @@
+dengeX Remote — Windows ve macOS uzaktan destek uygulaması geliştirme promptu
+
+Hazırlanma tarihi: 17 Eylül 2026. “dengeX Remote” çalışma adıdır; sonradan değiştirilebilir. Bu metin geliştirilecek ürünün gereksinimleridir; uygulamanın geliştirilmiş veya test edilmiş olduğunu ifade etmez.
+
+AnyDesk hangi özellikleri sağlıyor?
+
+AnyDesk; ekran paylaşımı, klavye ve fareyle uzaktan kontrol, dosya yönetimi, parolayla katılımsız erişim, cihaz/adres defteri, merkezi yönetim, özelleştirilmiş istemci, yetki profilleri, iki faktörlü doğrulama, sohbet, ekran kaydı, uzaktan yazdırma ve Wake-on-LAN gibi özellikler sunuyor. Özelliklerin kullanılabilirliği işletim sistemine, sürüme ve lisans paketine göre kontrol edilmelidir. Kaynak: AnyDesk özellikleri.
+
+Parolayla katılımsız erişim, her bağlantıda karşı tarafın kabul düğmesine basmasına gerek kalmadan erişim sağlama modelidir; önceden yapılandırılır. Bizim üründe bu modele ayrıca müşteri bazında teknisyen yetkisi ve cihaz bazında erişim politikası eklenecek. Kaynak: AnyDesk katılımsız erişim.
+
+Kopyalanacak geliştirme promptu
+
+Kıdemli bir masaüstü yazılım mühendisi, gerçek zamanlı iletişim mühendisi ve backend mimarı olarak çalış. dengeX markası için Windows ve macOS üzerinde çalışan, kendi müşterilerimize uzaktan teknik destek vereceğimiz “dengeX Remote” isimli bir uygulama geliştir.
+
+Ürün; müşterinin bilgisayarının ekranını gerçek zamanlı görmemizi, izin verilen durumlarda fare ve klavyesini kontrol etmemizi, dosya aktarmamızı ve cihazları müşteri bazında yönetmemizi sağlamalıdır. Hem destek veren hem destek alan tarafta Windows veya Mac kullanılabilmelidir.
+
+Hedef yalnızca tasarım veya simülasyon değildir. Gerçek bilgisayarlar arasında çalışan masaüstü istemcileri, sunucu servisleri, web yönetim paneli, kurulum paketleri ve doğrulanabilir test sonuçları üret. Eksik native işlevleri sahte başarılı sonuçlarla veya örnek video göstererek tamamlanmış gibi sunma.
+
+1. Ürünün kapsamı ve temel iş akışı
+
+Üç kullanım modu oluştur:
+
+Hızlı Destek: Müşteri uygulamayı açar; destek kimliği ve kısa süreli kod görünür. Teknisyen bağlantı ister, müşteri teknisyenin kimliğini ve istenen izinleri görerek kabul eder. Windows'ta mümkün olduğunca kurulum gerektirmeyen paket; Mac'te açılabilir uygulama paketi sun. macOS sistem izinlerinin yine gerekebileceğini açıkla.
+
+Yönetilen Cihaz: Müşteri cihazı kendi firmasına kaydeder. Kalıcı ajan, açık kurulum onayıyla çalışır. Katılımsız erişim ayrıca etkinleştirilir; uygulamayı kurmak bunu kendiliğinden açmaz.
+
+Teknisyen Konsolu: dengeX personeli kendi hesabıyla oturum açar, atandığı müşterileri ve cihazları görür, izin verilen oturumları başlatır.
+
+İlk hedef aynı etkileşimli kullanıcı masaüstünün paylaşılmasıdır. İlk sürümde ayrı sanal masaüstü, eş zamanlı farklı işletim sistemi kullanıcı oturumları veya RDP oturumu oluşturma beklenmez.
+
+Müşteriye ait uygulama sade olsun: “Destek Al”, “Bağlantı Kimliğim”, “Geçici Kod”, “İzinler”, “Bağlantıyı Kes” ve “Kalıcı Erişim” bölümleri yeterlidir. Teknik yapılandırma müşteri ekranını doldurmasın.
+
+2. Platform ve uyumluluk hedefleri
+
+Bağlanan cihaz
+
+Kontrol edilen cihaz
+
+Zorunluluk
+
+Windows
+
+Windows
+
+İlk sürüm
+
+Windows
+
+macOS
+
+İlk sürüm
+
+macOS
+
+Windows
+
+İlk sürüm
+
+macOS
+
+macOS
+
+İlk sürüm
+
+Windows 11 x64'ü başlangıç hedefi olarak al. Windows ARM64 veya eski Windows sürümlerini ayrıca test etmeden destekli ilan etme. macOS için Apple Silicon ve Intel paketlerini hedefle; başlangıç alt sınırı olarak macOS 14'ü değerlendir ve gerçekten desteklenen sürüm/donanım kombinasyonlarını ilk teknik doğrulamada kesinleştir. Bir mimaride derleme almak diğer mimaride çalıştığı anlamına gelmez.
+
+Masaüstü istemcileri bilgisayara native kurulur. Sunucu bileşenleri Docker ile çalışır. Son kullanıcı ekranını yakalayan ajanı Docker konteynerinde çalışacakmış gibi tasarlama.
+
+3. Teknik mimari
+
+Başlangıç tercihi aşağıdaki mimaridir. Teknik doğrulamada engel bulunursa gerekçesini ADR belgesine yaz, uygulanabilir alternatifi seç ve devam et.
+
+Bileşen
+
+Tercih
+
+Sorumluluk
+
+Web yönetim paneli
+
+Next.js, React, TypeScript
+
+Firmalar, cihazlar, personel, politikalar, raporlar
+
+Masaüstü arayüzü
+
+Tauri 2, React, TypeScript, Vite
+
+Müşteri ve teknisyen ekranları
+
+Native uzaktan erişim çekirdeği
+
+Rust; gerekli yerde Swift/Objective-C veya C/C++ köprüsü
+
+Ekran yakalama, giriş olayları, video işleme, işletim sistemi entegrasyonu
+
+API ve signaling
+
+Go
+
+Kimlik bağlama, yetki denetimi, cihaz kayıtları, oturum koordinasyonu
+
+Kalıcı veri
+
+PostgreSQL
+
+Müşteri, cihaz, politika, oturum ve denetim kayıtları
+
+Geçici koordinasyon
+
+Redis
+
+Presence, rate limit, kısa ömürlü durum, çoklu sunucu koordinasyonu
+
+Gerçek zamanlı taşıma
+
+WebRTC
+
+Görüntü ve şifreli veri kanalları
+
+Bağlantı aktarma
+
+coturn / TURN
+
+Doğrudan bağlantının kurulamadığı ağlar
+
+İsteğe bağlı dosya deposu
+
+S3 uyumlu depolama
+
+Dağıtım paketleri ve ileride açıkça etkinleştirilen kayıtlar
+
+Dağıtım
+
+Docker Compose, Portainer uyumlu servis tanımları
+
+Sunucu kurulumu ve işletimi
+
+Bu tablo bir tasarım tercihidir. Tauri arayüz kabuğudur; ekran yakalama, uzak işletim sistemine giriş gönderme ve video motoru hazır olarak varmış gibi davranma. Tauri'nin frontend ve native bileşenleri birleştirme yaklaşımını esas al. Kaynak: Tauri mimari başlangıcı.
+
+Masaüstü uygulamasının çalışması için müşteriye Node.js, Go veya Rust kurdurma. Derlenmiş bağımlılıkları paketle. Masaüstü arayüzünde Next.js sunucusu çalıştırmak yerine Vite tabanlı React kullan; web paneli Next.js olsun. Ortak UI bileşenleri, tipler ve çeviriler paylaşılabilir.
+
+Kullanıcı girişleri için bakımı süren, OIDC ve MFA destekleyen bir kimlik sağlayıcısı kullan; self-host kurulumda örneğin Keycloak değerlendirilebilir. Kimlik sağlayıcısını yapılandır, ürünün tenant ve cihaz yetkilendirmesini Go servisinde ayrıca uygula. Masaüstü girişlerinde sistem tarayıcısı üzerinden Authorization Code + PKCE kullan; istemci içine client secret koyma.
+
+4. İlk iş: gerçek native bağlantıyı doğrula
+
+Yönetim panelini ayrıntılandırmadan önce aşağıdaki teknik denemeyi tamamla:
+
+Bir Windows ve bir Mac'te gerçek ekran görüntüsünü native API ile yakala.
+
+Seçilen video/WebRTC kütüphanesini her iki işletim sistemi ve hedef CPU mimarilerinde derle.
+
+Yakalanan kareyi kodla, gönder, çöz ve karşı tarafta göster.
+
+Yetki verilmiş oturumda fare ve klavye girişini gerçek hedef masaüstüne uygula.
+
+Aynı testi zorunlu TURN moduyla farklı ağlarda çalıştır.
+
+Tauri penceresinde görüntü sunumunun performansını doğrula; gerekirse native render yüzeyi kullan.
+
+Video motorunda bakımı süren libwebrtc veya işlevsel olarak yeterli başka bir native WebRTC uygulamasını değerlendir. Yalnızca RTP taşıyan bir kütüphaneyi tam ekran yakalama/kodlama motoru sanma. Codec, donanım hızlandırma, FFI, derleme ve lisans kararlarını ayrı ayrı belgele. Her kareyi JSON/base64 olarak React state üzerinden aktarma.
+
+Kriptografik protokol veya codec'i sıfırdan icat etme. Hazır bir uzak masaüstü motorunun uyarlanması daha uygunsa lisansını, dağıtım yükümlülüklerini, bakım durumunu ve özelleştirme sınırlarını doğrula. AnyDesk'in özel kodunu, protokolünü, logosunu veya arayüz varlıklarını kopyalama. Ürünümüz bağımsız bir uygulama olsun.
+
+5. Müşteri, personel ve cihaz modeli
+
+Her müşteri firma bağımsız tenant olsun. Firma kaydı şu bilgileri içersin:
+
+Firma adı, müşteri kodu, durum, iletişim bilgileri, varsayılan saat dilimi.
+
+Şube ve cihaz grupları; örneğin “Muhasebe”, “Üretim”, “Merkez Ofis”.
+
+Atanan dengeX personeli ve müşteri yöneticileri.
+
+İzin politikaları, erişim saatleri ve saklama tercihleri.
+
+Her cihazda şu bilgiler bulunsun:
+
+Dahili rastgele UUID, kullanıcıya gösterilen ayrı destek kimliği, cihaz adı, firma ve grup.
+
+Windows/macOS sürümü, mimari, uygulama sürümü ve yetenek bilgileri.
+
+Çevrimiçi/çevrimdışı/meşgul/izin eksik durumu, son görülme zamanı.
+
+Cihazın public key bilgisi, kayıt tarihi, kayıt onayı ve iptal durumu.
+
+Katılımsız erişim durumu, parola sürümü ve son değişim zamanı; parolanın kendisi değil.
+
+Örnek destek kimliği biçimi DX-4827-1936-AB olabilir. Bu yalnızca tanımlayıcıdır; parola veya yetkilendirme yerine geçmez. MAC adresini, IP adresini ya da kolay tahmin edilen donanım özetini cihazın güvenlik kimliği olarak kullanma.
+
+Yeni cihaz kendi anahtar çiftini yerelde oluştursun. Aynı anahtar klonlanarak iki cihazda kullanıldığında fark edilebilsin; yeniden kurulum ve başka firmaya taşıma kontrollü yeniden kayıt gerektirsin.
+
+6. Roller ve erişim yetkileri
+
+Rol
+
+Yetki
+
+Platform yöneticisi
+
+dengeX sistemini ve firma kayıtlarını yönetir; bu rol kendiliğinden müşteri masaüstüne giriş hakkı vermez
+
+Destek yöneticisi
+
+Yetkili müşteri kapsamı içinde personel atar ve destek politikalarını yönetir
+
+Teknisyen
+
+Yalnızca atandığı müşteri ve cihazlara, verilen kabiliyetlerle bağlanır
+
+Müşteri yöneticisi
+
+Kendi firmasının cihazlarını ve erişim izinlerini yönetir, erişimi iptal edebilir
+
+Müşteri kullanıcısı
+
+Kendi cihazında destek isteyebilir, gelen isteği kabul veya reddedebilir
+
+Denetçi
+
+Yetkili olduğu kayıtları okuyabilir; uzaktan kontrol ve parola yönetimi yapamaz
+
+Bir dengeX personeli birden fazla firmaya atanabilir. Bu, firmaların verilerini birbirine açmasın. Tenant kapsamını yalnızca frontend filtresiyle sağlama; API sorgularında, WebSocket mesajlarında, dosya işlemlerinde ve veritabanı erişiminde uygula. Mümkünse PostgreSQL RLS'yi ek savunma katmanı olarak kullan; bağlantı havuzunda tenant bağlamının temizlendiğini doğrula.
+
+Kabiliyetleri ayrı tanımla: view_screen, control_input, clipboard_read, clipboard_write, file_send, file_receive, restart_device, manage_unattended_access, manage_devices, view_audit.
+
+Etkin izin; müşteri politikası, cihaz politikası, personel ataması ve oturumda verilen iznin kesişimi olsun. İşletim sistemi izni yoksa uygulama politikası bunu aşamasın. İzleme izni, dosya indirme veya kontrol izni anlamına gelmesin.
+
+7. Müşteriye özel parolalar ve cihaz kaydı
+
+Dört bilgiyi birbirinden ayır:
+
+Bilgi
+
+Amaç
+
+Yaşam döngüsü
+
+Firma kullanıcısı hesabı
+
+Müşteri paneline giriş
+
+Kişiye özel hesap ve MFA politikası
+
+Cihaz kayıt daveti
+
+Yeni cihazı firmaya ekleme
+
+Tek kullanımlık, süreli token
+
+Geçici destek kodu
+
+Anlık destek isteğini eşleştirme
+
+Kısa süreli ve oturumla sınırlı
+
+Cihaz erişim parolası
+
+Önceden açılan katılımsız erişim
+
+Cihaza özel, değiştirilebilir ve iptal edilebilir
+
+Firma açıldığında bütün bilgisayarların aynı parolayı kullanmasını varsayılan yapma. Her cihaz için ayrı parola üretilebilsin; müşteri bazında yönetim kolaylığı cihaz grupları ve kullanıcı yetkileriyle sağlansın.
+
+Cihaz kayıt akışı: Yetkili kişi firmayı ve grubu seçer; en az 128 bit rastgele, süreli ve tek kullanımlık kayıt token'ı oluşturulur. Ajan bu token ile kendi public key'ini kaydeder. Token tüketimi atomik olsun. Kayıt aşamasında kullanıcı hangi firmaya bağlandığını görsün. Kalıcı sırları yükleyiciye gömme. Token veya parola URL sorgusuna, uygulama loguna ve analiz servisine düşmesin.
+
+Parola oluşturma: Cihaz başına kriptografik rastgelelikle en az 20 karakterlik parola üret. Müşterinin kendi belirlediği parolada en az 14 karakteri ve yaygın/zayıf parola denetimini uygula. Parolayı yalnızca oluşturulduğu veya değiştirildiği güvenli ekranda göster; sonradan “mevcut parolayı göster” için düz metin saklama.
+
+Doğrulama: Cihaz erişim parolasının doğrulayıcısı hedef ajanda, ayrı salt ile Argon2id kullanılarak tutulsun. Parametreleri en düşük desteklenen cihazda ölç ve sürümle. Merkez veritabanı yalnızca parola/politika sürümünü ve yönetim metadatasını tutsun. Hesap parolalarının işlenmesini seçilen kimlik sağlayıcısına bırak. Argon2id tercihinin dayanağı: OWASP parola saklama rehberi.
+
+Parola, cihaz kimliği doğrulanmış uçtan uca şifreli veri kanalı üzerinden hedef ajana iletilip orada doğrulansın; Go API'sinin veya TURN'ün parolayı görmesi gerekmesin. Bu aşamada henüz ekran kareleri, pano veya dosyalar gönderilmesin. Kimlik doğrulama kanalının mesaj boyutu ve deneme sayısı sınırlandırılsın.
+
+Merkez panelindeki “Parola oluştur/değiştir” işlemi, güvenli native yönetim akışını açabilir. Değişiklik; müşteri yöneticisinin yeni MFA doğrulaması ve cihazda önceden tanımlanmış yönetim izni veya yerel yönetici onayı gerektirsin. Teknik destek rolü tek başına parolayı sıfırlayamasın. Standart dengeX teknisyenine müşteri onayı dışında erişim kazandıran bir sıfırlama yolu yaratma.
+
+Offline cihazda değişikliği uygulanmış gösterme. Ajan onayı gelene kadar “bekliyor” göster; sırları merkezi düz metin kuyruğa koyma. Eski parolayı güvenlik amacıyla iptal etme işlemi sunucuda yeni oturumları hemen engellesin; yeni parola uygulanana kadar cihaz erişime kapalı kalabilsin. Kurtarma yolu, kimliği doğrulanmış müşteri yöneticisiyle yeniden yetkilendirme veya cihazdaki yerel yönetici işlemi olsun.
+
+Parola değiştiğinde eski oturum yetkilerini ve ilgili hatırlama kayıtlarını geçersiz kıl. İlk sürümde merkezi parola kasası yapma. İleride “bu cihazda hatırla” eklenecekse yalnızca işletim sistemi güvenli kasasında, açık kullanıcı tercihiyle sakla.
+
+8. Bağlantı modlarının ayrıntısı
+
+Onaylı destek:
+
+Müşteri uygulamayı açar ve “Destek Al”a basar.
+
+Ajan kısa süreli destek kodu üretir; varsayılan geçerlilik 10 dakika olsun.
+
+MFA ile giriş yapmış ve ilgili müşteriye atanmış teknisyen kimlik/kod girer.
+
+Sunucu personel kapsamını kontrol eder ve süreli bağlantı isteği oluşturur.
+
+Müşteri; teknisyen adı, dengeX kimliği, istenen izinler ve varsa kayıt durumunu görür.
+
+Müşteri kabul edince geçici kod atomik olarak tüketilir, şifreli oturum kurulur.
+
+Bağlantı süresince görünür durum çubuğu ve yerel kesme düğmesi bulunur.
+
+Oturum kapanınca geçici yetkiler kaldırılır.
+
+Destek kodu en az 8 rastgele alfasayısal karakter veya eşdeğer entropide olsun. Süre, oran sınırlaması ve müşteri onayıyla birlikte kullanılsın. Kod tek başına kimliği belirsiz internet kullanıcısına bağlantı yetkisi vermesin. Kayıtlı olmayan müşteriler için ayrı destek daveti tasarlanabilir; bu davet kişiyi başka bir firmanın cihazlarına dahil etmesin.
+
+Katılımsız erişim:
+
+Müşteri yöneticisi cihaz için bu modu açıkça etkinleştirir.
+
+Cihaza özel parola atanır; hangi teknisyenlerin ve saatlerin yetkili olduğu belirlenir.
+
+Teknisyen kendi hesabı ve MFA'sı ile giriş yapar.
+
+Sunucu firma/cihaz/politika denetimi yapar; hedef ajan parolayı ayrıca doğrular.
+
+Oturum açılır, ekran kullanılabiliyorsa bağlantı göstergesi ve kesme kontrolü görünür olur.
+
+Müşteri kalıcı erişimi kapattığında yeni bağlantılar reddedilir, mevcut oturumlar sonlandırılır.
+
+Katılımsız erişim yetkisi, cihazın açık, ağda, gerekli sistem izinlerine sahip ve desteklenen masaüstü durumunda olması şartlarını ortadan kaldırmaz. İlk sürümde kullanıcı oturumu açıkken çalışmayı garantile; açılış öncesi, çıkış yapılmış oturum veya kilit ekranı desteğini ayrıca doğrulamadan vaat etme.
+
+9. Görüntü aktarımı ve uzaktan kontrol
+
+Gerçek zamanlı görüntü, fare hareketi/tıklama/sürükleme/tekerlek ve klavye basma/bırakma çalışsın.
+
+Video kalitesi ağ koşullarına göre çözünürlük, bitrate ve kare hızıyla ayarlansın. Donanım kodlayıcı desteklenmiyorsa kontrollü yazılım yedeği olsun.
+
+Başlangıç codec'i, iki platformdaki gerçek encode/decode denemesinden sonra seçilsin. H.264/VP8 desteğini ve dağıtım koşullarını doğrula; seçimi ADR'de kaydet.
+
+Çoklu monitörde ilk sürüm en az monitör seçimini desteklesin. Döndürülmüş ekran, negatif ekran koordinatı, Retina/DPI ölçeği ve monitör takılıp çıkarılması ele alınsın.
+
+Ekrana sığdır, gerçek boyut, yakınlaştır, tam ekran ve “yalnızca izle” seçenekleri olsun.
+
+TR Q, TR F ve EN düzenleri; Türkçe karakterler; Windows/Cmd/Option/Alt farkları test edilsin. Metin gönderme ve fiziksel tuş eşlemesi ayrı modlar olarak ele alınsın.
+
+Fare hareketleri gecikince eski hareketler atılabilsin; tuş basma/bırakma gibi kritik olaylar güvenilir ve sıralı taşınsın.
+
+Bağlantı kopunca basılı kalmış tuşlar ve fare düğmeleri bırakılsın. Yeniden bağlanmada eski giriş paketleri uygulanmasın.
+
+Görüntü kuyruğu sınırlı olsun; gecikmeyi büyüten eski kare birikimi önlensin. Gerekli yerde keyframe isteği ve geri basınç uygulansın.
+
+Varsayılan olarak hedef başına tek kontrol eden teknisyen olsun. Sonradan salt izleyici veya kontrol devri eklenebilir; iki kişinin aynı anda kontrolü belirsiz bırakılmasın.
+
+10. Windows uygulaması
+
+Ekran yakalama için Windows Graphics Capture ve/veya DXGI Desktop Duplication'ı değerlendir; masaüstü durumu ve donanıma göre test edilmiş seçim yap. Desktop Duplication kare, monitör dönüşü ve imleç işlemlerinin native düzeyde ele alınmasını gerektirir. Kaynak: Microsoft Desktop Duplication API.
+
+Giriş için desteklenen Windows API'lerini kullan. SendInput yetki bütünlüğü sınırlarına tabidir; normal kullanıcı sürecinin yönetici ekranlarını otomatik kontrol edebildiğini varsayma. Kaynak: Microsoft SendInput.
+
+Quick Support'u normal kullanıcı oturumunda çalıştır. Yönetilen kurulumda, gerekiyorsa sınırlı yetkili servis ile etkileşimli kullanıcı ajanını ayır. Session 0'daki servis tek başına kullanıcının masaüstü değildir. Servis ve ajan arasındaki IPC, kimlik doğrulamalı ve işletim sistemi erişim izinleriyle sınırlandırılmış olsun.
+
+UAC/secure desktop, kilit ekranı ve Ctrl+Alt+Del desteğini ayrı yetenekler olarak işle. Bunlar için meşru platform desteği ve kurulum yetkileri yoksa net biçimde “desteklenmiyor/yerel onay gerekli” göster. UAC'yi kapatan veya güvenlik masaüstünü atlatan yöntemler kullanma. İlk sürümün normal masaüstü desteğini bu özellikler yüzünden bloklama.
+
+Windows için imzalı yükleyici, gerekiyorsa MSI, kaldırma akışı ve güncelleme desteği üret. Sertifika yoksa yerel geliştirme paketini açıkça böyle etiketle. Sırf imzalandı diye SmartScreen uyarısının kesin kalkacağını iddia etme.
+
+11. macOS uygulaması
+
+Ekran yakalamayı ScreenCaptureKit ile, giriş olaylarını uygun macOS API'leriyle gerçekleştir. VideoToolbox gibi native hızlandırma seçeneklerini ilk teknik denemede değerlendir. Kaynak: Apple ScreenCaptureKit teknik oturumu.
+
+İlk açılışta sürüme uygun izin yardım ekranı oluştur. Ekran kaydı/ekran paylaşımı ve Accessibility izinlerini ayrı göster. Kullanıcı doğru Sistem Ayarları bölümüne gidebilsin, ardından “İzinleri yeniden kontrol et” seçeneğiyle uygulama durumunu yenileyebilsin. Gerekiyorsa yeniden başlatma gereğini açıkça belirt. Kaynaklar: Apple ekran kaydı izinleri, Apple Accessibility erişimi.
+
+Yalnızca kullanılan API gerçekten gerektiriyorsa Input Monitoring iste. Dosya aktarımı için seçili klasör erişimini tercih et; Full Disk Access'i her kullanıcıdan zorunlu olarak isteme. İzinleri otomatik verilmiş sayma veya TCC veritabanını değiştirerek atlatma.
+
+Ekran izni yoksa görüntü başlatma; Accessibility yoksa kontrolü kapatıp izinli görüntülemeyi sunabil. İzin oturum sırasında kaldırılırsa ilgili işlev hemen dursun. Kullanıcının yapabileceği düzeltmeyi Türkçe göster.
+
+Yönetilen modda oturum ajanı, gerekiyorsa ayrı helper ve sistem başlangıç kaydını platformun desteklediği mekanizmalarla tasarla. Arka plan daemon'ının kullanıcı oturumu ve TCC yetkilerini kendiliğinden devraldığını varsayma.
+
+Uyku, kapalı kapak, kullanıcı değiştirme, kilit ekranı ve FileVault açılış öncesi kilit durumlarını ayrı test et. FileVault kilidi açık değilken ajan çalışıyormuş gibi davranma; gerekirse yerel kullanıcının kilidi açması gerektiğini göster.
+
+Apple Silicon ve Intel paketleri oluştur; uygun olduğunda universal binary veya ayrı indirmeler kullan. Dağıtımda Developer ID imzası, hardened runtime, notarization ve stapling iş akışını hazırla. Apple hesabı ve sertifikaları eksikse bunları teslimat engeli olarak açıkça belirt; imzalanmamış paketi üretim sürümü ilan etme.
+
+12. NAT, signaling, TURN ve bağlantı sürekliliği
+
+İstemciler API/signaling sunucusuna dışarıya doğru HTTPS/WSS bağlantısı açsın. Müşteri modeminde port yönlendirme zorunlu olmasın. ICE ile doğrudan yol denensin; mümkün değilse TURN'e geçilsin. TURN, WebRTC'de doğrudan bağlantı kurulamayan durumlar için aktarma sağlar. Kaynak: WebRTC TURN açıklaması.
+
+UDP tercihli çalış; desteklenen TURN TCP/TLS seçeneklerini de doğrula. Kısıtlı ağlarda 443/TLS üzerinden aktarma ihtiyacını ayrı IP veya doğru listener mimarisiyle ele al. Aynı IP:443 üzerinde hem normal HTTPS hem TURN TLS'nin gelişigüzel birlikte çalışacağını varsayma. HTTP proxy arkasındaki ağlar için ölçülmüş uyumluluk ver; tüm kurumsal ağlarda kesin çalışır iddiası kurma.
+
+TURN için kısa ömürlü kimlik bilgileri, kullanıcı/tenant kotası, bant genişliği sınırı, allocation sınırı ve uygunsuz hedef IP engelleri uygula. Açık bir genel relay oluşturma. TCP/TLS'de kullanılan taşıma ile relay tarafındaki port/taşıma ihtiyaçlarını ayır; gerçek coturn yapılandırmasına göre firewall tablosu hazırla.
+
+Web paneli ve HTTPS/WSS trafiği için Cloudflare kullanılabilir. Ancak standart public-hostname Cloudflare Tunnel'ı, herhangi bir ek istemci olmadan çalışan genel TURN/UDP servisi gibi tasarlama. Doğrudan erişilebilir TURN alan adı/IP'sini ayrı planla. Cloudflare'in yayımlanan uygulama protokollerindeki non-HTTP istemci gerekliliklerini dikkate al. Kaynak: Cloudflare Tunnel protokolleri.
+
+Bağlantı durumları: requested, awaiting_consent, negotiating, authenticating, active, reconnecting, ended, failed. Her duruma zaman aşımı, izinli geçiş ve kullanıcı mesajı tanımla. Tekrarlanan mesajlar ve aynı anda gelen kabul/iptal işlemleri güvenli biçimde ele alınsın.
+
+Kısa ağ kesintisinde bounded backoff ve yeniden yetkilendirme kullan. Uzun kesintiden sonra eski onayı sınırsız yeniden kullanma. Yetki iptali çevrimiçi ajana hemen gönderilsin; güvenlik politikası olarak en fazla 60 saniyelik yenilenen oturum lease'i kullan. Merkezle bağlantı kesilince lease süresi dolduğunda kontrol, görüntü ve veri aktarımı kapansın. İptali offline cihaza anında ulaştırabildiğini iddia etme.
+
+13. Şifreleme ve güven sınırları
+
+API/signaling TLS üzerinden; video ve veri uç noktalar arasında WebRTC'nin standart şifreleme mekanizmalarıyla taşınsın. TURN içerikleri çözmemeli. Salt “HTTPS kullanıyoruz” açıklamasını uçtan uca şifreleme sayma.
+
+Cihaz public key'lerini doğrulanmış kayıt sürecine bağla. Teknisyen oturumunu kullanıcı hesabına ve gerektiğinde teknisyen cihaz anahtarına bağla. Oturum grant'i; müşteri, hedef cihaz, kullanıcı, yetkiler, süre, tekil nonce/jti ve politika sürümüne bağlı olsun. Hedef ajan grant imzasını, süresini, kapsamını ve yeniden kullanımını denetlesin.
+
+WebRTC DTLS fingerprint'lerini doğrulanmış uç nokta kimlikleri ve oturum bağlamıyla ilişkilendir. Seçilen kütüphanenin standart imza/sertifika doğrulamasını kullan; sadece signaling mesajında gelen fingerprint'e körü körüne güvenme. Hangi anahtar otoritesine güvenildiğini ve kontrol düzlemi ele geçirilirse kalan riskleri tehdit modelinde yaz. Sunucuya hiç güven gerekmiyormuş gibi güvenlik iddiası üretme.
+
+Ekran, dosya ve input kanalları yalnızca karşı kimlik, politika ve oturum onayı/parolası tamamlandığında açılsın. IPC tarafında da aynı sınırlar korunsun; renderer tek başına ekran yakalama veya input enjeksiyonu başlatamasın.
+
+Yerel anahtarlar ve gerekli token'lar macOS Keychain, Windows DPAPI/Credential Manager veya uygun OS kasasında saklansın. Yönetici ve teknisyen MFA'sı zorunlu olsun. Token'lar URL'ye, hata raporuna, loga ve analytics'e yazılmasın. Brute-force koruması hesap, cihaz, tenant ve IP düzeyinde birleşsin; kalıcı hesap kilitlemeyle kolay hizmet engellemeye dönüşmesin.
+
+14. Dosya aktarımı, pano ve sohbet
+
+Dosya aktarımında iki yön ayrı yetkilendirilsin. Kullanıcı hedef klasörü seçebilsin; varsayılan indirme klasörü uygulamaya özel olsun. İlk sürümde dosyalar WebRTC veri kanalıyla aktarılsın; merkezi sunucuya farkında olmadan kopyalanmasın.
+
+Parçalı aktarım, ilerleme, iptal, hata mesajı ve bütünlük doğrulaması ekle. Büyük dosyada bellek tüm dosyayla doldurulmasın; akış, kota ve geri basınç kullan. Yarım aktarım ayrı dosyada tutulsun; doğrulama tamamlanınca atomik sonlandır. Üzerine yazma kullanıcı politikasına bağlı olsun.
+
+Path traversal, symlink/reparse point kaçışı, Windows özel yol biçimleri, ad çakışması, disk dolması ve dosyanın aktarım sırasında değişmesi ele alınsın. Aktarılan dosyayı otomatik çalıştırma. Aktarım hızını, video ve input etkileşimini bozmayacak şekilde sınırla.
+
+Panoda ilk sürüm metin desteklesin; okuma ve yazma ayrı açılabilsin. Görsel/dosya panosu sonraya bırakılabilir. Parola alanlarının veya hassas pano içeriğinin otomatik tespitini garanti etme; hassas ortamlarda panoyu tamamen kapatma imkânı ver. Pano içeriğini loglama.
+
+Oturum içi basit metin sohbeti ekle. Varsayılan olarak uçtan uca veri kanalında taşı; kalıcı sohbet saklama kapalı olsun. Kayıt istenirse kimin görebileceği ve saklama süresi ayrı politika olsun.
+
+15. Yönetim paneli ve masaüstü ekranları
+
+Web panelinde şunlar bulunsun: genel durum, firmalar, şubeler/gruplar, cihazlar, kullanıcılar, teknisyen atamaları, politikalar, erişim iptali, aktif oturumlar, geçmiş, denetim kayıtları, uygulama sürümleri ve sistem sağlığı.
+
+Cihaz listesinde firma, grup, işletim sistemi, çevrimiçi durum, ajan sürümü, izin eksikliği ve son bağlantıya göre filtreleme yap. Firma detayı; cihazları, atanmış personeli ve destek geçmişini bir arada sunsun. Teknik destek süresi raporu çıkarılabilsin; oturum süresini otomatik faturalanabilir süre sayma.
+
+“Bağlan” düğmesi ilk sürümde masaüstü teknisyen konsolunu açsın. Deep link içine parola veya uzun ömürlü token koyma. Kısa ömürlü, tek kullanımlık referansı native uygulama kendi giriş oturumuyla güvenli biçimde değiştirsin; OS uygulama eşlemesinin tek başına kimlik doğrulaması olmadığını kabul et. Uygulama yoksa kurulum yönlendirmesi göster. Tarayıcıdan tam uzak kontrol ayrı bir sonraki sürüm özelliğidir.
+
+Arayüz Türkçe öncelikli, İngilizceye hazır i18n yapısında olsun. Açık/koyu tema, yüksek kontrast ve klavyeyle gezinme desteklensin. dengeX adı, sağlanan gerçek logo ve kurumsal varlıklar kullanılsın; varlık verilmemişse değiştirilebilir metin logosu kullan. AnyDesk arayüzünü birebir kopyalama.
+
+Müşteri ana ekranı en fazla birkaç temel eyleme odaklansın. Teknisyen ekranında cihaz listesi ve bağlantı araçları bulunabilir. Bağlantı çubuğunda müşteri/cihaz adı, teknisyen, izinler, kalite, monitör seçimi ve bağlantıyı kesme görülsün. Ekranlar için loading, empty, offline, error ve yetkisiz durumları tasarla.
+
+16. Denetim kayıtları ve gizlilik
+
+Denetim kaydı; işlem yapan kimliği, firma/cihazı, oturum kimliğini, zamanı, onay türünü, politika sürümünü, olay türünü, sonucu ve gerekçeyi içersin. Önemli olaylar: cihaz kaydı, bağlantı isteği, kabul/ret, başarısız doğrulama, izin değişimi, parola rotasyonu, erişim iptali, aktarım özeti, oturum bitişi ve güncelleme.
+
+Ekran görüntüsü, tuş içeriği, parola, pano veya dosya içeriğini standart audit log'a yazma. IP ve dosya adı gibi metadata için de minimizasyon ve erişim politikası uygula. Olay saatlerini UTC tut; kullanıcıya kendi saat diliminde göster.
+
+Uygulama rolünün değiştiremediği append-only kayıt yolu, ayrı yazma yetkileri ve harici yedekleme tasarla. Daha güçlü değişiklik tespiti için imzalı kontrol noktaları kullanılabilir; veritabanı yöneticisinin sınırsız yetkisine rağmen mutlak değiştirilemezlik vaat etme.
+
+Audit saklamasında 90 gün başlangıç ürün varsayımı olabilir; bu hukuki bir zorunluluk değildir. Müşteri politikasına göre değiştirilebilir tut; yedeklerdeki silme takvimini de tanımla. Hukuki metinleri düzenlenebilir alanlar olarak sağla; teknik özelliklerden dolayı otomatik “KVKK uyumlu” iddiasında bulunma.
+
+Ekran kaydı ilk sürüm dışında olsun. Eklendiğinde varsayılan kapalı, görünür bildirimli, ayrıca yetkilendirilmiş ve şifreli saklanan bir özellik olsun. Kayıt nerede oluşturuluyor, kim çözüyor ve kim izleyebiliyor açıkça tanımlansın.
+
+17. Veritabanı ve API sözleşmeleri
+
+En az şu varlıkları modelle: tenants, branches, device_groups, users, memberships, technician_assignments, devices, device_keys, enrollment_tokens, access_policies, device_policy_versions, sessions, session_participants, consent_events, audit_events, transfer_summaries, agent_releases, update_rollouts.
+
+Identity provider kullanıcılarını sabit subject/issuer çiftiyle bağla; e-postayı tek güvenlik anahtarı yapma. Cihaz parolasının doğrulayıcısı merkez şemada bulunmasın. Yüksek entropili tek kullanımlık token'lar merkezde ham biçimleriyle tutulmasın. Tüm müşteri varlıkları tenant kapsamında ve uygun bileşik yabancı anahtarlarla bağlı olsun.
+
+API'ler en az şu işlevleri kapsasın:
+
+Müşteri/şube/grup ve personel atama yönetimi.
+
+Kayıt daveti oluşturma/iptal, cihaz kaydı, heartbeat ve cihaz iptali.
+
+Oturum isteği, onay/ret, sonlandırma ve aktif oturum sorgusu.
+
+Politika sürümleme, cihazın politika onayı ve kalıcı erişimi kapatma.
+
+Audit filtreleme, sürüm manifesti ve cihaz yeteneklerini sorgulama.
+
+REST için OpenAPI; signaling ve native veri kanalları için sürümlü mesaj şemaları üret. Doğrulama, boyut sınırları, pagination, idempotency, hata kodları ve rate limit davranışı sözleşmede yer alsın. WebSocket yeniden kimlik doğrulaması ve token iptali ele alınsın. İstemciden gelen tenant/user alanlarını güvenilir kimlik bilgisi kabul etme.
+
+18. Kurulum, güncelleme ve işletim
+
+Sunucu için API, web paneli, kimlik sağlayıcısı, PostgreSQL, Redis ve coturn servislerini kapsayan Docker Compose hazırla. Veritabanı/Redis portlarını doğrudan internete açma. Kalıcı volume'lar, healthcheck, kaynak limitleri, restart politikaları ve environment örnekleri sağla. TURN port eşlemesini normal web container'ıyla aynı varsayma.
+
+Tek VDS üzerinde pilot kurulum yapılabilsin; TURN'ün ayrı sunucuya taşınabilmesi için servis sınırları açık olsun. DNS/TLS/firewall rehberinde her portun amacı ve kimden erişileceği yazsın. Portainer'a aktarılabilir compose dosyası sağla; production sırlarını compose içine gömme.
+
+İlk yönetici için herkeste aynı varsayılan parola oluşturma. İlk kurulum daveti veya konsoldan tek seferlik güvenli hesap kurma akışı kullan.
+
+Native güncellemeler imzalı manifest ve imzalı paketle doğrulansın. Yalnızca HTTPS veya checksum kontrolü yeterli sayılmasın. Stable/beta kanalları, aşamalı dağıtım, bakım penceresi ve başarısız sürümden kontrollü kurtarma olsun. Kurtarma, saldırganın güvenlik düzeltmesi öncesine sürüm düşürmesine izin vermesin. Aktif destek oturumunda zorunlu olmayan güncelleme başlamasın.
+
+Kaldırma işlemi servisi/helper'ı/başlangıç kaydını temizlesin, yerel anahtarları güvenli biçimde kaldırsın ve mümkünse merkezi cihaz kaydını iptal etsin. Cihaz merkezden silindiğinde eski paket/token ile yeniden canlanmasın.
+
+Veritabanı yedekleme/geri yükleme denemesi, migration politikası, agent-protocol uyumluluk matrisi ve rollback talimatı teslim et. Metriklerde aktif cihazlar, başarısız bağlantılar, TURN oranı, relay trafiği, p95 bağlantı süresi, crash oranı ve izin hatalarını göster; ekran/pano içeriğini telemetriye ekleme.
+
+19. Performans hedefleri
+
+Aşağıdakiler ölçülecek hedeflerdir; test edilmeden gerçekleşmiş kabul edilmez:
+
+Referans testte 1080p, 30 fps hedefle; zayıf bağlantıda 720p veya daha düşük kare hızına in.
+
+Kullanıcı onayı sonrasından ilk kullanılabilir kareye kadar, önceden çevrimiçi ve izinleri hazır cihazlarda sağlıklı ağ için p95 ≤ 5 saniye hedefle.
+
+RTT ≤ 50 ms olan referans ağda etkileşim gecikmesi p95 ≤ 200 ms hedefle; ölçümün input-to-photon mu başka bir metrik mi olduğunu belirt.
+
+60 dakikalık oturumlarda sınırsız bellek artışı, basılı kalan tuş veya sessiz görüntü donması olmasın.
+
+CPU, bellek, enerji kullanımı ve bitrate'i donanım/OS/codec bilgisiyle raporla; tüm cihazlara tek bir performans sonucu genelleme.
+
+Pilot kapasite hedefini 100 kayıtlı cihaz ve 10 eş zamanlı oturum olarak belirle. Kontrol düzlemi kapasitesi ile TURN veri kapasitesini ayrı ölç.
+
+Örnek kapasite hesabı: 10 oturumun her biri ortalama 4 Mbit/s tek yönlü görüntü taşıyıp TURN kullanırsa relay'e yaklaşık 40 Mbit/s giriş ve 40 Mbit/s çıkış oluşur; toplam işlenen trafik yaklaşık 80 Mbit/s'dir. Bu bir boyutlandırma örneğidir; protokol ek yükü, ses ve dosya transferi hariçtir. Trafik ücretlendirmesini sağlayıcının gerçek ingress/egress modeline göre hesapla.
+
+20. Test ve kabul kriterleri
+
+İşlevin varlığını yalnızca mock servis veya frontend testiyle doğrulama. En az bir gerçek Windows ve bir gerçek Mac ile aşağıdaki senaryoları çalıştır; Intel/Apple Silicon iddialarını ilgili donanımda veya uygun native test ortamında ayrıca doğrula.
+
+Senaryo
+
+Beklenen sonuç
+
+Dört platform eşleşmesi
+
+Gerçek ekran, fare ve klavye çalışır
+
+LAN, ayrı ev ağları, mobil hotspot
+
+Uygun doğrudan veya TURN bağlantısı kurulur
+
+UDP kapalı, zorunlu relay
+
+Desteklenen TURN yedeği çalışır veya açıklayıcı hata verir
+
+Yanlış parola, süresi dolan kod, tekrar kullanılan token
+
+Erişim verilmez; oran sınırı ve kayıt oluşur
+
+Başka müşterinin cihaz ID'sini kullanma
+
+Veri sızıntısı ve oturum açılması engellenir
+
+Yalnızca izleme yetkisi
+
+Input, pano ve dosya API'si doğrudan çağrılsa da reddedilir
+
+Müşteri bağlantıyı keser
+
+Görüntü, kontrol, pano ve aktarım durur
+
+Aktif teknisyenin yetkisi iptal edilir
+
+Çevrimiçi bildirim veya tanımlı lease sınırı içinde erişim sona erer
+
+macOS izni eksik/iptal
+
+İşlev kapalı; kullanıcıya düzeltme yolu gösterilir
+
+Windows UAC veya kilit ekranı
+
+Doğrulanmış yetenek uygulanır; yoksa yerel işlem gereği açıkça belirtilir
+
+Ağ kesilip yeniden gelir
+
+Eski girişler uygulanmaz; izin ve süre tekrar denetlenir
+
+TR Q/TR F/EN ve Retina/çoklu ekran
+
+Tuşlar, imleç ve koordinatlar doğru çalışır
+
+Büyük dosya, disk dolması, tehlikeli yol
+
+Kaynaklar sınırlıdır; hata/iptal güvenli tamamlanır
+
+Değiştirilmiş güncelleme paketi
+
+İmza doğrulaması nedeniyle reddedilir
+
+Servis/ajan IPC'sine yetkisiz erişim
+
+İşlem reddedilir
+
+Kaldırma ve yeniden kayıt
+
+Eski anahtarlar/izinler yeniden kullanılmaz
+
+Tenant izolasyonu, token tekrar kullanımı, oturum yetkileri ve politika iptali için otomatik test yaz. Protokol parser'ları, dosya yolu işlemleri ve native IPC girişleri için fuzz/property testlerini uygulanabilir ölçüde ekle. UI testleriyle native izin testlerini ayrı raporla.
+
+CI'da Go/TypeScript/Rust kontrolleri, bağımlılık güvenlik taraması, sır taraması, SBOM üretimi ve Windows/macOS build matrisi bulunsun. CI'ın gerçek kullanıcı masaüstü izinlerini doğrulayamadığı testleri “manuel/native ortam gerekli” olarak işaretle.
+
+21. Geliştirme sırası
+
+Aşama 0 — Teknik doğrulama: Capture, encode/decode, gerçek uzak input, dört yönlü temel uyumluluk ve zorunlu TURN denemesi. Kullanılacak motor, native render, codec ve platform sınırlarını karara bağla.
+
+Aşama 1 — Çalışan destek çekirdeği: Hesap girişi, temel firma/cihaz kaydı, teknisyen ataması, kısa süreli kod, müşteri onayı, ekran/kontrol, görünür bağlantı durumu, sonlandırma, temel audit ve minimal panel. İki cihazdaki gerçek kabul testiyle tamamla.
+
+Aşama 2 — Yönetilen müşteri kullanımı: Cihaza özel parola, katılımsız erişim, politika yönetimi, güvenli parola rotasyonu, dosya aktarımı, metin panosu, sohbet, monitör seçimi ve teknik destek raporları.
+
+Aşama 3 — Dağıtım ve işletim: İmzalı/notarize paketler, güvenli güncelleme, sunucu işletim belgeleri, yedek geri yükleme ve pilot kapasite ölçümü.
+
+Daha sonraki sürümler: Açık onaylı oturum kaydı, sistem sesi, kontrollü yeniden başlatma ve yeniden bağlanma, tarayıcı viewer, kurumsal SSO/SCIM, destek talebi entegrasyonu, Wake-on-LAN, uzaktan yazdırma ve whiteboard. Bunları ilk sürümde tamamlanmış gösterme. Wake-on-LAN için ağ içi erişilebilir yardımcı cihaz ve donanım koşullarını ayrıca tasarla.
+
+İlk sürüme uzaktan genel amaçlı shell, gizli ekran izleme, güvenlik yazılımı kapatma, görünmez kurulum, tuş kaydı veya gizli kamera/mikrofon ekleme. Ürünün kapsamı görünür ve yetkilendirilmiş teknik destektir.
+
+22. Teslimatlar ve çalışma kuralları
+
+Kaynak kodu; apps/admin-web, apps/desktop, services/api, services/signaling, native/agent-core, native/platform-windows, native/platform-macos, packages/protocol, packages/ui, infra, docs gibi sınırları net bir yapı halinde düzenle. Başlangıçta API/signaling tek Go uygulaması olabilir; gereksiz mikroservisler oluşturma, modül sınırlarını koru.
+
+Şunları teslim et:
+
+Mimari ve veri akışı belgesi; güven sınırları ve tehdit modeli.
+
+Gerçek kaynak kodu, kilitli bağımlılıklar ve tekrar üretilebilir build komutları.
+
+OpenAPI ve sürümlü signaling/native protokol sözleşmeleri.
+
+Veritabanı migration'ları ve yalnızca geliştirmede kullanılan örnek veriler.
+
+Docker Compose, Portainer kurulum yönergesi, DNS/TLS/firewall tablosu.
+
+Windows ve macOS kurulum/geliştirme paketleri; imza durumları açık belirtilmiş olarak.
+
+Türkçe müşteri kurulum kılavuzu ve teknisyen kullanım kılavuzu.
+
+Platform/yetenek matrisi, gerçek test sonuçları, performans ölçümleri ve bilinen sınırlamalar.
+
+Güncelleme, anahtar iptali, yedek geri yükleme ve olay müdahale talimatları.
+
+Bağımlılık lisans dökümü, SBOM ve sürüm yayın kontrolü.
+
+İlk yanıtında varsayımları, mimari kararları ve Aşama 0 planını kısa şekilde yaz; ardından uygulamaya geç. Her aşamada çalışan kod, nasıl çalıştırılacağı ve gerçekten yapılan doğrulamanın kanıtını üret. Yalnızca yol haritası verip bitirme. Bir araç/kütüphane özelliği belirsizse güncel resmi kaynaktan doğrula.
+
+Gerçek Windows/Mac donanımı, imza sertifikası veya dış servis bilgisi eksikse bunu kesin olarak belirt; erişimin olan kısmı tamamla ve eksik ortam için uygulanabilir doğrulama adımlarını hazırla. Yapılmamış native testleri, tamamlanmamış modülleri ve örnek çıktıları başarılı kabul etme. Bu görev geniş olduğu için uygulamayı aşamalı geliştir; tek seferde üretim hazır AnyDesk eşdeğeri vaat etme.
+
+Tamamlanma tanımı: dengeX personeli kendi hesabıyla giriş yapar, yalnızca yetkili müşterinin cihazını seçer, müşteri onayıyla veya önceden açılmış cihaza özel katılımsız erişimle bağlanır, Windows ve Mac arasında gerçek ekranı görüp kontrol eder; müşteri erişimi kesebilir ve tüm yetki/oturum olayları denetlenebilir. Bu davranış kurulabilir paketler ve gerçek cihaz testleriyle gösterilmelidir.
+
+Bu promptta verilen domain, firma örneği, kapasite ve süre değerleri geliştirme varsayımıdır. Üretim alan adlarını veya mevcut dengeX servislerini otomatik değiştirme; dağıtım yapılandırmasını gerçek ortam bilgileriyle doldurulabilir tut.

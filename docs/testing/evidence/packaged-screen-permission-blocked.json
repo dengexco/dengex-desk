@@ -1,0 +1,7 @@
+{
+  "experiment": "capture",
+  "reason": "screen_recording_permission_required",
+  "result": "blocked",
+  "schemaVersion": 1,
+  "twoDeviceTest": false
+}
