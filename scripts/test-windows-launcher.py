@@ -30,14 +30,24 @@ def main():
         package.mkdir()
         unrelated.mkdir()
         source = root / "fixture.c"
-        source.write_text('#include <windows.h>\n__declspec(dllexport) DWORD WINAPI DxAppAbiVersion(void){return 1;}\n__declspec(dllexport) DWORD WINAPI DxAppRun(void){return 0;}\n')
+        source.write_text('''#define _WIN32_WINNT 0x0A00
+#include <windows.h>
+#include <commctrl.h>
+__declspec(dllexport) DWORD WINAPI DxAppAbiVersion(void){return 1;}
+__declspec(dllexport) DWORD WINAPI DxAppRun(void){return 77;}
+// Imported, never invoked: makes the fixture require the same v6 assembly as Tauri.
+__declspec(dllexport) HRESULT WINAPI DxControlsProbe(const TASKDIALOGCONFIG *p){return TaskDialogIndirect(p,NULL,NULL,NULL);}
+''')
         dll = package / "dengex_desktop.dll"
-        subprocess.run(["cl", "/nologo", "/LD", "/MT", str(source), f"/Fe{dll}", f"/Fo{root / 'fixture.obj'}"], check=True, cwd=root)
+        subprocess.run(["cl", "/nologo", "/LD", "/MT", str(source), f"/Fe{dll}", f"/Fo{root / 'fixture.obj'}", "/link", "comctl32.lib"], check=True, cwd=root)
         good = dll.read_bytes()
         exe = package / "dengeX Remote.exe"
         builder.build(dll, exe)
         invoke(exe, unrelated, "--verify-package", 0)
         invoke(exe, unrelated, "--load-check", 0)
+        # Quoting/trailing whitespace must not accidentally launch the app UI.
+        subprocess.run(f'"{exe}" "--load-check"  ', cwd=unrelated, check=True, timeout=20)
+        invoke(exe, unrelated, "", 77)
         shutil.copyfile(dll, unrelated / dll.name)
         dll.unlink()
         invoke(exe, unrelated, "--load-check", 12)  # no CWD fallback
@@ -48,7 +58,7 @@ def main():
         invoke(exe, unrelated, "--load-check", 13)
         dll.write_bytes(good)
         invoke(exe, unrelated, "--load-check", 0)
-    print(json.dumps({"result":"passed", "nativeWindows":True, "checks":["valid_hash", "native_dll_load", "unicode_path", "missing_dll_no_cwd_fallback", "modified_dll_blocked", "truncated_dll_blocked", "restored_dll_loads"]}))
+    print(json.dumps({"result":"passed", "nativeWindows":True, "checks":["valid_hash", "native_dll_load", "common_controls_v6", "quoted_check_does_not_run_ui", "unicode_path", "missing_dll_no_cwd_fallback", "modified_dll_blocked", "truncated_dll_blocked", "restored_dll_loads"]}))
 
 
 if __name__ == "__main__":
