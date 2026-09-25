@@ -1,6 +1,6 @@
-dengeX Remote Pilot 2 — Windows ekranını Mac'ten izleme
+dengeX Remote Pilot 3 — Windows ekranını Mac'ten izleme
 
-1. Windows'ta yeni Pilot 2 ZIP'ini tamamen çıkartın ve dengeX Remote.exe'yi açın.
+1. Windows'ta yeni Pilot 3 ZIP'ini tamamen çıkartın ve dengeX Remote.exe'yi açın.
 2. Cihaza bağlan > Bu bilgisayarın ekranını paylaş > Davet oluştur seçin.
 3. Windows'ta görünen kodu Mac'te Davet ile ekranı izle bölümüne girin.
 4. Mac'ten Bağlantı isteği gönder'e basın.
@@ -17,7 +17,7 @@ Kontroller:
 Bu yönde Mac ekran kaydı izni gerekmez. Mac kendi ekranını paylaşacaksa izin gerekir.
 Windows ilk monitör, en fazla 1280x720; uzak klavye/fare kontrolü yoktur.
 
-Sorun olursa uygulamada PİLOT 2 yazdığını ve iki cihazın Sunucu adresinin aynı
+Sorun olursa uygulamada PİLOT 3 yazdığını ve iki cihazın Sunucu adresinin aynı
 olduğunu kontrol edin. Eski Pilot 1 Windows uygulaması davet oluşturamaz.
 Hangi adımda kaldığınızı ve görünen hata metnini iletin. Davet kodunu veya
 özel ekran içeriğini hata raporlarına eklemeyin.
@@ -25,3 +25,8 @@ Hangi adımda kaldığınızı ve görünen hata metnini iletin. Davet kodunu ve
 Windows 11 x64, WebView2 Runtime ve Media Foundation gerekir. İmzasız pilot
 pakettir. TURN olmayan ağlarda görüntü bağlantısı kurulamayabilir. Gerçek
 Windows ekranı/iki cihaz kabul testi henüz tamamlanmış sayılmaz.
+
+Pilot 3: EXE tek başına çalışmaz; dengex_desktop.dll aynı klasörde olmalıdır.
+DLL değişmişse veya başka sürümden alınmışsa başlatıcı açılışı engeller.
+Bağlantı denemeleri sınırlıdır; limit mesajında bir dakika bekleyin.
+Oturum içindeki Oturum güvenliği alanından onay ve bitiş olaylarını görebilirsiniz.

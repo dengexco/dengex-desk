@@ -47,7 +47,7 @@ Mac helper, parent pipe kapanışında kendini sonlandırır. Windows native cap
 
 - Yönetim anahtarı Mac Application Support ve `.artifacts/pilot/create-token` içinde yalnızca kullanıcı tarafından okunur (0600). Dağıtım paketinde veya URL'de bulunmaz.
 - Pilot 2: `/pilot/create-guest`, yalnızca `DX_PILOT_GUEST_HOSTS=1` açıldığında hesap olmadan cihazın kendi odasını oluşturur. `pilot-server.py start` bunu pilot için açar; varsayılan API yapılandırmasında kapalıdır. Genel kabul bütçesi 6 oluşturma/dakika, toplam 8 açık odadır. İstemcinin gönderdiği IP header’larına güvenilmez. Bu bir hesap/MFA doğrulaması veya üretim DoS koruması değildir. `/pilot/create` yönetim anahtarını gerektirmeye devam eder.
-- Davet 256 bit rastgele, tek kullanımlık, oda ile sınırlı ve 30 dakika geçerlidir. Aynı anda katılma yarışında yalnızca biri kazanır. Sunucuda erişim token'larının yalnızca SHA-256 özeti tutulur.
+- Davet 256 bit rastgele, tek kullanımlık, oda ile sınırlı ve 5 dakika geçerlidir; oda oluşturulduğundan itibaren toplam oturum sınırı 30 dakikadır. Aynı anda katılma yarışında yalnızca biri kazanır. Sunucuda erişim token'larının yalnızca SHA-256 özeti tutulur.
 - Host ve viewer farklı token'lar kullanır. Alıcı host adına onay veremez. Tek alıcı, yalnızca view_screen. Genel input/file/shell komutu yoktur.
 - API, TLS sertifikasını doğrulayan native istemciden kullanılır; yönlendirmeler takip edilmez. Token Authorization header veya JSON body'dedir, sorgu parametrelerinde değildir. Browser Origin taşıyan doğrudan API istekleri reddedilir.
 - SDP fingerprint'leri sunucunun Ed25519 imzalı 45 saniyelik grant'ine; room, pilot kapsamı ve view_screen yetkisine bağlanır. Native uç, beklenen iki fingerprint'i ve imzayı mevcut SessionGate ile denetler. Yerel lease en fazla 40 saniye ve grant bitişinden kısadır.
@@ -61,3 +61,5 @@ Cloudflare Quick Tunnel yalnızca HTTPS kontrol/eşleştirme ve paket indirmeyi 
 Kalıcı kullanım için Cloudflare hesabında ayrı bir named tunnel ve alan adı; farklı ağlarda güvenilir medya için ayrı erişilebilir TURN servisi gerekir. Quick Tunnel adresi yeniden başlatmada değişir ve test amaçlıdır. Bu makinenin uykusu/yeniden başlaması hizmeti kapatır; otomatik boot servisi kurulmadı.
 
 Kaynaklar: [Cloudflare Quick Tunnels](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/do-more-with-tunnels/trycloudflare/), [public hostname protokolleri](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/routing-to-tunnel/protocols/), [Cloudflare STUN/TURN](https://developers.cloudflare.com/realtime/turn/), [Tauri Windows derleme](https://v2.tauri.app/distribute/windows-installer/).
+
+Pilot 3 için [uygulama güvenliği ve DLL paketleme](security-and-dll.tr.md) belgesine bakın. Sunucuyu yeni kaynakla derleyip yeniden başlatın; eski süreç yeni limitleri uygulamaz.

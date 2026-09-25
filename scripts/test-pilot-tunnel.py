@@ -12,6 +12,10 @@ assert request('/healthz')[0]==200
 assert request('/pilot/create','POST','bad',{})[0]==401
 code,a=request('/pilot/create','POST',admin,{})
 assert code==201
+assert a['room']['security']['version']==1
+assert 0<a['room']['security']['inviteExpiresAt']<a['room']['expiresAt']
+assert request('/pilot/security',token=a['token'])[0]==401
+assert request('/pilot/security',token=admin)[0]==200
 code,b=request('/pilot/join','POST',body={'invite':a['invite'],'name':'HTTPS doğrulama cihazı'})
 assert code==200
 assert request('/pilot/join','POST',body={'invite':a['invite'],'name':'Yeniden kullanma'})[0]==401
@@ -27,5 +31,5 @@ assert code==200
 assert request('/pilot/action','POST',mac['token'],{'action':'accept'})[0]==409
 assert request('/pilot/action','POST',guest['token'],{'action':'accept'})[0]==200
 assert request('/pilot/action','POST',guest['token'],{'action':'end'})[0]==200
-result={'result':'passed','url':'https://pilot.example.invalid','addressRedacted':True,'tests':['public_https_health','unauthenticated_admin_creation_rejected','single_use_invitation','viewer_cannot_consent','host_consent','revocation','guest_host_creation','guest_cannot_administer','guest_host_local_consent'],'mediaTest':False,'twoDeviceTest':False}
+result={'result':'passed','url':'https://pilot.example.invalid','addressRedacted':True,'tests':['public_https_health','unauthenticated_admin_creation_rejected','single_use_invitation','viewer_cannot_consent','host_consent','revocation','guest_host_creation','guest_cannot_administer','guest_host_local_consent','security_policy_snapshot','audit_requires_admin'],'mediaTest':False,'twoDeviceTest':False}
 (root/'docs/testing/evidence/cloudflare-api.json').write_text(json.dumps(result,indent=2)+'\n');print(json.dumps(result,indent=2))

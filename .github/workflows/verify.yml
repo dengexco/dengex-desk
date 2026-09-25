@@ -33,6 +33,35 @@ jobs:
           cache: false
       - run: go test -race ./...
         working-directory: services/api
+  windows-dll:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ilammy/msvc-dev-cmd@v1
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.98.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: python scripts/test-windows-launcher.py
+      - run: npm ci
+      - run: npm run build
+      - run: Copy-Item apps/desktop/src-tauri/resources/pilot-server.example.json apps/desktop/src-tauri/resources/pilot-server.json
+      - run: cargo build --locked -p dengex-desktop --lib --features tauri/custom-protocol
+        env:
+          RUSTFLAGS: -C target-feature=+crt-static
+      - run: |
+          python scripts/build-windows-launcher.py target/debug/dengex_desktop.dll target/debug/dengex-launcher.exe
+          $p = Start-Process target/debug/dengex-launcher.exe -ArgumentList '--load-check' -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "Real application DLL failed to load: $($p.ExitCode)" }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-dll-build
+          path: |
+            target/debug/dengex_desktop.dll
+            target/debug/dengex-launcher.exe
   frontend:
     runs-on: ubuntu-latest
     steps:

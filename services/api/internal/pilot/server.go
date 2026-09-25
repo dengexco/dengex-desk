@@ -29,27 +29,32 @@ type Room struct {
 	Offer, Answer                    json.RawMessage
 	Expires                          time.Time
 	HostSeen, ViewerSeen             time.Time
+	InviteExpires                    time.Time
+	Events                           []SecurityEvent
 }
 type Server struct {
-	mu              sync.Mutex
-	rooms           map[string]*Room
-	createHash      [32]byte
-	key             ed25519.PrivateKey
-	now             func() time.Time
-	AllowGuestHosts bool // Explicit deployment opt-in; configure before serving.
-	guestWindow     time.Time
-	guestCreates    int
+	mu                sync.Mutex
+	rooms             map[string]*Room
+	createHash        [32]byte
+	key               ed25519.PrivateKey
+	now               func() time.Time
+	AllowGuestHosts   bool // Explicit deployment opt-in; configure before serving.
+	guestWindow       time.Time
+	guestCreates      int
+	joins, failedAuth budget
+	events            []SecurityEvent
+	uploads           chan struct{}
 }
 
 func New(createToken string) (*Server, error) {
-	if len(createToken) < 40 {
+	if raw, err := base64.RawURLEncoding.Strict().DecodeString(createToken); err != nil || len(raw) != 32 {
 		return nil, errors.New("pilot creation token requires at least 32 random bytes")
 	}
 	_, key, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
 		return nil, err
 	}
-	return &Server{rooms: make(map[string]*Room), createHash: sha256.Sum256([]byte(createToken)), key: key, now: time.Now}, nil
+	return &Server{rooms: make(map[string]*Room), createHash: sha256.Sum256([]byte(createToken)), key: key, now: time.Now, uploads: make(chan struct{}, 16)}, nil
 }
 func randomToken() string {
 	b := make([]byte, 32)
@@ -59,7 +64,14 @@ func randomToken() string {
 	return base64.RawURLEncoding.EncodeToString(b)
 }
 func tokenHash(r *http.Request) [32]byte {
-	return sha256.Sum256([]byte(strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")))
+	value, ok := strings.CutPrefix(r.Header.Get("Authorization"), "Bearer ")
+	if !ok || len(r.Header.Values("Authorization")) != 1 || len(value) != 43 {
+		return [32]byte{}
+	}
+	if raw, err := base64.RawURLEncoding.Strict().DecodeString(value); err != nil || len(raw) != 32 {
+		return [32]byte{}
+	}
+	return sha256.Sum256([]byte(value))
 }
 func same(a, b [32]byte) bool { return subtle.ConstantTimeCompare(a[:], b[:]) == 1 }
 func reply(w http.ResponseWriter, status int, v any) {
@@ -91,6 +103,7 @@ func (s *Server) Handler() http.Handler {
 	m.HandleFunc("POST /pilot/join", s.join)
 	m.HandleFunc("GET /pilot/room", s.room)
 	m.HandleFunc("POST /pilot/action", s.action)
+	m.HandleFunc("GET /pilot/security", s.security)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "no-store")
 		w.Header().Set("X-Content-Type-Options", "nosniff")
@@ -104,20 +117,35 @@ func (s *Server) Handler() http.Handler {
 			bad(w, 400, "query_parameters_forbidden")
 			return
 		}
-		s.mu.Lock()
-		defer s.mu.Unlock()
-		for id, room := range s.rooms {
-			if s.now().After(room.Expires) {
-				delete(s.rooms, id)
-				continue
-			}
-			if room.State != "ended" && ((!room.HostSeen.IsZero() && s.now().Sub(room.HostSeen) > 60*time.Second) || (!room.ViewerSeen.IsZero() && s.now().Sub(room.ViewerSeen) > 60*time.Second)) {
-				room.State = "ended"
-				room.Offer = nil
-				room.Answer = nil
-			}
+		if !s.boundedBody(w, r) {
+			return
 		}
-		m.ServeHTTP(w, r)
+		buffer := &bufferedResponse{header: make(http.Header), status: http.StatusOK}
+		s.mu.Lock()
+		func() {
+			defer s.mu.Unlock()
+			for id, room := range s.rooms {
+				if !s.now().Before(room.Expires) {
+					s.record(room, "session_expired")
+					delete(s.rooms, id)
+					continue
+				}
+				if room.State == "waiting" && !s.now().Before(room.InviteExpires) {
+					s.endRoom(room, "invitation_expired")
+				}
+				if room.State != "ended" && ((!room.HostSeen.IsZero() && s.now().Sub(room.HostSeen) > 60*time.Second) || (!room.ViewerSeen.IsZero() && s.now().Sub(room.ViewerSeen) > 60*time.Second)) {
+					s.endRoom(room, "heartbeat_lost")
+				}
+			}
+			if !s.failedAuthLimited(buffer, r) {
+				m.ServeHTTP(buffer, r)
+			}
+		}()
+		for key, values := range buffer.header {
+			w.Header()[key] = values
+		}
+		w.WriteHeader(buffer.status)
+		_, _ = w.Write(buffer.Bytes())
 	})
 }
 func (s *Server) create(w http.ResponseWriter, r *http.Request) {
@@ -143,7 +171,7 @@ func (s *Server) createGuest(w http.ResponseWriter, r *http.Request) {
 		s.guestCreates = 0
 	}
 	if s.guestCreates >= 6 {
-		bad(w, 429, "creation_rate_limited")
+		limited(w, "creation_rate_limited")
 		return
 	}
 	s.guestCreates++
@@ -160,11 +188,16 @@ func (s *Server) issueRoom(w http.ResponseWriter) {
 		return
 	}
 	host, invite, id := randomToken(), randomToken(), randomToken()
-	room := &Room{ID: id, HostHash: sha256.Sum256([]byte(host)), InviteHash: sha256.Sum256([]byte(invite)), State: "waiting", Expires: s.now().Add(30 * time.Minute), HostSeen: s.now()}
+	room := &Room{ID: id, HostHash: sha256.Sum256([]byte(host)), InviteHash: sha256.Sum256([]byte(invite)), State: "waiting", Expires: s.now().Add(30 * time.Minute), InviteExpires: s.now().Add(5 * time.Minute), HostSeen: s.now()}
 	s.rooms[id] = room
+	s.record(room, "invitation_created")
 	reply(w, 201, map[string]any{"token": host, "invite": invite, "room": s.snapshot(room, "host"), "authorityKey": base64.StdEncoding.EncodeToString(s.key.Public().(ed25519.PublicKey))})
 }
 func (s *Server) join(w http.ResponseWriter, r *http.Request) {
+	if !s.joins.allow(s.now(), 30) {
+		limited(w, "join_rate_limited")
+		return
+	}
 	var req struct {
 		Invite string `json:"invite"`
 		Name   string `json:"name"`
@@ -185,14 +218,19 @@ func (s *Server) join(w http.ResponseWriter, r *http.Request) {
 			room.ViewerName = req.Name
 			room.State = "awaiting_consent"
 			room.ViewerSeen = s.now()
+			s.record(room, "viewer_joined")
 			reply(w, 200, map[string]any{"token": token, "room": s.snapshot(room, "viewer"), "authorityKey": base64.StdEncoding.EncodeToString(s.key.Public().(ed25519.PublicKey))})
 			return
 		}
 	}
+	s.record(nil, "invitation_rejected")
 	bad(w, 401, "invitation_invalid_expired_or_used")
 }
 func (s *Server) authenticate(r *http.Request) (*Room, string) {
 	h := tokenHash(r)
+	if h == [32]byte{} {
+		return nil, ""
+	}
 	for _, room := range s.rooms {
 		if same(h, room.HostHash) {
 			room.HostSeen = s.now()
@@ -260,15 +298,14 @@ func (s *Server) action(w http.ResponseWriter, r *http.Request) {
 	}
 	switch req.Action {
 	case "end":
-		room.State = "ended"
-		room.Offer = nil
-		room.Answer = nil
+		s.endRoom(room, "session_ended")
 	case "accept":
 		if role != "host" || room.State != "awaiting_consent" {
 			bad(w, 409, "invalid_transition")
 			return
 		}
 		room.State = "negotiating"
+		s.record(room, "host_accepted")
 	case "offer", "answer":
 		host := req.Action == "offer"
 		if (host && (role != "host" || room.State != "negotiating" || room.Offer != nil)) || (!host && (role != "viewer" || room.State != "negotiating" || room.Offer == nil || room.Answer != nil)) {
@@ -292,6 +329,7 @@ func (s *Server) action(w http.ResponseWriter, r *http.Request) {
 		} else {
 			room.Answer = req.Description
 			room.State = "active"
+			s.record(room, "session_active")
 		}
 	default:
 		bad(w, 400, "unknown_action")
@@ -301,6 +339,7 @@ func (s *Server) action(w http.ResponseWriter, r *http.Request) {
 }
 func (s *Server) snapshot(room *Room, role string) map[string]any {
 	result := map[string]any{"id": room.ID, "role": role, "state": room.State, "viewerName": room.ViewerName, "expiresAt": room.Expires.Unix(), "capabilities": []string{"view_screen"}, "accountVerified": false}
+	result["security"] = map[string]any{"version": 1, "inviteExpiresAt": room.InviteExpires.Unix(), "events": room.Events}
 	if role == "viewer" && room.Offer != nil {
 		result["offer"] = room.Offer
 	}

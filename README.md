@@ -6,14 +6,14 @@ Windows ve macOS için Tauri, Rust, Swift ve Go ile geliştirilen uzaktan destek
 
 ## Windows uygulamasını indir
 
-**[Windows x64 ZIP paketini indir](https://github.com/dengexco/dengex-desk/releases/download/v0.1.0-pilot.2/dengeX-Remote-Windows-x64.zip)**
+**[Windows x64 ZIP paketini indir](https://github.com/dengexco/dengex-desk/releases/download/v0.1.0-pilot.3/dengeX-Remote-Windows-x64.zip)**
 
 1. `dengeX-Remote-Windows-x64.zip` dosyasının tamamını bir klasöre çıkartın.
-2. İçindeki **`dengeX Remote.exe`** uygulamasını açın; `resources` klasörünü yanında tutun.
+2. İçindeki **`dengeX Remote.exe`** uygulamasını açın; `dengex_desktop.dll` ve `resources` klasörünü yanında tutun.
 3. **Windows ekranına bağlanmak için:** Windows’ta **Cihaza bağlan → Bu bilgisayarın ekranını paylaş → Davet oluştur** seçin.
 4. Mac’te **Davet ile ekranı izle** bölümüne Windows’taki kodu girin; Windows kullanıcısı gelen isteği kabul etsin.
 
-[Sürüm sayfasında](https://github.com/dengexco/dengex-desk/releases/tag/v0.1.0-pilot.2) EXE, kullanım adımları ve SHA-256 dosyası da bulunur. **Source code (zip)** geliştiriciler içindir; Windows'ta çalıştırılacak uygulama paketi yukarıdaki ZIP'tir. Tek EXE indirilirse sunucu adresini uygulamaya elle girmek gerekir.
+[Sürüm sayfasında](https://github.com/dengexco/dengex-desk/releases/tag/v0.1.0-pilot.3) kullanım adımları ve SHA-256 dosyası da bulunur. **Source code (zip)** geliştiriciler içindir; Windows'ta çalıştırılacak uygulama paketi yukarıdaki ZIP'tir. Pilot 3 EXE + DLL paketidir; tek EXE yeterli değildir.
 
 Windows 11 x64 hedeflenir; Microsoft Edge WebView2 Runtime gereklidir. Paket imzasız bir pilot sürümdür. İçindeki Cloudflare test adresi geçicidir; Mac ve pilot sunucusu açık kalmalıdır. Windows → Mac ve Mac → Windows ekran izleme akışları vardır; uzak klavye/fare kontrolü yoktur.
 
@@ -22,6 +22,7 @@ Gerçek macOS ekran yakalama, VideoToolbox H.264 encode/decode, yerel WebRTC ta�
 - [Gerçek doğrulama sonuçları ve sınırları](docs/testing/results.md)
 - [Mimari ve mevcut modüller](docs/architecture.md)
 - [Motor/codec kararı](docs/adr/0001-phase-zero-engine.md)
+- [Uygulama güvenliği ve DLL paketleme](docs/security-and-dll.tr.md)
 - [Tehdit modeli](docs/threat-model.md)
 - [Kurulum ve işletim](docs/operations.md)
 - [Gerçek cihaz kabul listesi](docs/testing/manual-matrix.md)
@@ -93,7 +94,7 @@ bash scripts/package-macos.sh        # release-mode development .app; production
 
 Go süreç denemesi: `cd services/api && DX_LISTEN=127.0.0.1:18432 go run ./cmd/api`. Çalışma zamanı hazır olmayan ürün işlevlerini başarılı gibi döndürmez.
 
-Windows üzerinde kaynak derlemesi için Node/Rust/MSVC araçları hazırken önce `apps/desktop/src-tauri/resources/pilot-server.example.json` dosyasını aynı klasörde `pilot-server.json` adıyla kopyalayın; var olan yerel yapılandırmayı değiştirmeyin. Ardından `npm ci`, `npm run build` ve `cargo build --locked --target x86_64-pc-windows-msvc -p dengex-desktop --features tauri/custom-protocol` çalıştırın. `rustup target add x86_64-pc-windows-msvc` ile hedef kurulabilir. Sunucu adresi boşken uygulama açılır; pilot ekranında kendi HTTPS sunucunuzun adresi girilir. `scripts/package-windows-cross.sh`, ilk geliştirme ortamındaki yerel cargo-xwin/LLVM/SDK araçlarına bağlıdır; temiz klon için otomatik araç kurucusu değildir.
+Windows üzerinde kaynak derlemesi için Node/Rust/MSVC araçları hazırken önce `apps/desktop/src-tauri/resources/pilot-server.example.json` dosyasını aynı klasörde `pilot-server.json` adıyla kopyalayın; var olan yerel yapılandırmayı değiştirmeyin. Ardından `npm ci`, `npm run build` ve `cargo build --locked --target x86_64-pc-windows-msvc -p dengex-desktop --lib --features tauri/custom-protocol` çalıştırın. Başlatıcı ve DLL dağıtım adımları [paketleme belgesindedir](docs/security-and-dll.tr.md). `rustup target add x86_64-pc-windows-msvc` ile hedef kurulabilir. Sunucu adresi boşken uygulama açılır; pilot ekranında kendi HTTPS sunucunuzun adresi girilir. `scripts/package-windows-cross.sh`, ilk geliştirme ortamındaki yerel cargo-xwin/LLVM/SDK araçlarına bağlıdır; temiz klon için otomatik araç kurucusu değildir.
 
 Cloudflare pilotunu çalıştırmak için [ayrı kurulum belgesini](docs/cloudflare-pilot.tr.md) izleyin. Oturum davetleri ve özel anahtarlar depodan veya Releases üzerinden dağıtılmaz. İlk Windows pilot ZIP'indeki public test adresi kalıcı bir ortak hizmet değildir; kendi sunucunuzu kullanabilirsiniz.
 

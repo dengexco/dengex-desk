@@ -1,8 +1,8 @@
-dengeX Remote — Pilot 2 — Windows x64
+dengeX Remote — Pilot 3 — Windows x64
 
 WINDOWS BİLGİSAYARA MAC'TEN BAĞLANMA
 1. ZIP'in tamamını klasöre çıkartın ve dengeX Remote.exe dosyasını açın.
-   resources klasörünü yanında tutun. Rust/Node/Go kurulumu gerekmez.
+   dengex_desktop.dll ve resources klasörünü yanında tutun. Rust/Node/Go kurulumu gerekmez.
 2. Windows'ta Cihaza bağlan > Bu bilgisayarın ekranını paylaş > Davet oluştur.
 3. Oluşan davet kodunu Mac kullanıcısına iletin.
 4. Mac uygulamasında Cihaza bağlan > Davet ile ekranı izle bölümüne bu kodu
@@ -28,7 +28,7 @@ Yalnızca ekran izleme vardır; uzak klavye/fare, dosya/pano veya katılımsız
  değişirse yeniden bağlantı gerekebilir. Windows'ta Media Foundation'ın yerel
  H.264 kodlayıcısı kullanılır; donanım hızlandırma garantisi verilmez.
 
-Davet tek kullanımlıktır ve 30 dakika geçerlidir. Cihaz adı kullanıcı tarafından
+Davet tek kullanımlıktır ve 5 dakika geçerlidir. Oturum en fazla 30 dakika sürer. Cihaz adı kullanıcı tarafından
  yazılır; doğrulanmış teknisyen hesabı değildir. Davet oluşturmak, karşı tarafa
  ekran erişimi vermez; ekranı paylaşan kullanıcı ayrıca kabul eder.
 
@@ -41,3 +41,8 @@ Sunucu yetkisi yenilenemezse native gönderici paylaşımı durdurur.
 Gerçek Windows ekranı ve iki fiziksel cihaz arasında canlı görüntü testi halen
  beklenir. Hata olursa iki uygulamadaki hata metnini ve test saatini iletin;
  davet veya özel ekran içeriğini hata raporuna eklemeyin.
+
+Pilot 3: EXE tek başına çalışmaz; dengex_desktop.dll aynı klasörde olmalıdır.
+DLL değişmişse veya başka sürümden alınmışsa başlatıcı açılışı engeller.
+Bağlantı denemeleri sınırlıdır; limit mesajında bir dakika bekleyin.
+Oturum içindeki Oturum güvenliği alanından onay ve bitiş olaylarını görebilirsiniz.

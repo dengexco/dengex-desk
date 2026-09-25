@@ -11,7 +11,9 @@
     "revocation",
     "guest_host_creation",
     "guest_cannot_administer",
-    "guest_host_local_consent"
+    "guest_host_local_consent",
+    "security_policy_snapshot",
+    "audit_requires_admin"
   ],
   "mediaTest": false,
   "twoDeviceTest": false

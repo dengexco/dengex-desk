@@ -1,5 +1,7 @@
 # Güven sınırları
 
+25 Eylül 2026 Pilot 3: [güncel uygulama güvenliği, DLL yükleme ve kalan sınırlar](security-and-dll.tr.md). Aşağıdaki tablo ilk laboratuvarın üretim hedeflerini de içerir.
+
 Bu dosya bir tehdit modeli ve entegrasyon kapısıdır; bitmiş güvenlik denetimi değildir.
 
 | Sınır / tehdit | Mevcut denetim | Üretim öncesi açık iş |

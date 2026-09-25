@@ -2,9 +2,10 @@ import React,{useEffect,useRef,useState} from 'react';
 import {invoke,isTauri} from '@tauri-apps/api/core';
 import {listen} from '@tauri-apps/api/event';
 import {Monitor,ShieldCheck,Copy,Link,Square,Check,LoaderCircle} from 'lucide-react';
-type Room={id:string;role:'host'|'viewer';state:string;viewerName:string;expiresAt:number;offer?:RTCSessionDescriptionInit;leaseSeconds?:number};
+type Room={id:string;role:'host'|'viewer';state:string;viewerName:string;expiresAt:number;offer?:RTCSessionDescriptionInit;leaseSeconds?:number;security?:{version:number;inviteExpiresAt:number;events:{at:number;kind:string}[]}};
 type Config={serverUrl:string;canHost:boolean;platform:string};
 const labels:Record<string,string>={waiting:'Karşı cihazın katılması bekleniyor',awaiting_consent:'Ekranı paylaşan kişinin onayı bekleniyor',negotiating:'Şifreli görüntü bağlantısı kuruluyor',active:'Oturum yetkisi açık',ended:'Deneme sona erdi'};
+const securityLabels:Record<string,string>={invitation_created:'Tek kullanımlık davet oluşturuldu',viewer_joined:'Davet kullanıldı; yerel onay bekleniyor',host_accepted:'Ekranı paylaşan kişi izin verdi',session_active:'Süreli ekran izleme yetkisi verildi',session_ended:'Oturum sonlandırıldı',heartbeat_lost:'Bağlantı kesildi; oturum kapatıldı',invitation_expired:'Davet süresi doldu'};
 export function Pilot(){
  const [config,setConfig]=useState<Config>();const [url,setUrl]=useState('');const [invite,setInvite]=useState('');const [name,setName]=useState('Bu bilgisayar');
  const [room,setRoom]=useState<Room>();const [ownInvite,setOwnInvite]=useState('');const [error,setError]=useState('');const [busy,setBusy]=useState(false);
@@ -54,7 +55,7 @@ export function Pilot(){
  async function accept(){setError('');setBusy(true);try{await invoke('pilot_accept')}catch(e){setError(String(e))}finally{setBusy(false)}}
  async function copy(){try{await navigator.clipboard.writeText(ownInvite);setCopied(true)}catch{setError('Kodu seçip kopyalayabilirsiniz.')}}
  return <>
-  <div className="eyebrow">İKİ CİHAZ · DAVETLİ DENEME · PİLOT 2</div><h1>Birlikte bağlanalım.</h1><p className="lead">Bağlanılacak bilgisayarda davet oluşturun. İzleyecek bilgisayarda bu daveti girin. Paylaşım, ekranı açan kişinin kabulüyle başlar.</p>
+  <div className="eyebrow">İKİ CİHAZ · DAVETLİ DENEME · PİLOT 3</div><h1>Birlikte bağlanalım.</h1><p className="lead">Bağlanılacak bilgisayarda davet oluşturun. İzleyecek bilgisayarda bu daveti girin. Paylaşım, ekranı açan kişinin kabulüyle başlar.</p>
   {error&&<div className="error" role="alert">{error}</div>}
   {!native&&<div className="info-notice">Bu ekran kurulu masaüstü uygulamasında çalışır.</div>}
   {!room?<div className="two-columns pilot-entry">
@@ -66,6 +67,7 @@ export function Pilot(){
    {room.role==='host'&&room.state==='awaiting_consent'&&<div className="consent"><h2>{room.viewerName} ekranınızı görmek istiyor.</h2><p>Bu ad davetli tarafından yazıldı; personel hesabı/MFA doğrulanmadı. Yalnızca daveti verdiğiniz kişiyle deneme yapın.</p><p>İzin: ana ekranınızı görüntüleme. Klavye, fare, dosya ve pano erişimi verilmez.</p><div className="test-actions"><button className="primary" disabled={busy} onClick={accept}>Ekranımı paylaşmayı kabul et</button><button className="secondary" onClick={stop}>Reddet</button></div></div>}
    {room.role==='host'&&['negotiating','active'].includes(room.state)&&<div className="consent"><h2>Ekran paylaşımına izin verdiniz.</h2><p>{room.state==='active'?'Paylaşım yetkisi doğrulandı; görüntü akışı hazırlanıyor.':'Görüntü bağlantısı kuruluyor.'} Paylaşımı bu penceredeki Denemeyi bitir düğmesiyle veya uygulamayı kapatarak durdurabilirsiniz. Klavye ve fare kontrolü verilmez.</p></div>}
    {room.role==='viewer'&&room.state!=='ended'&&<><div className="viewer"><video ref={video} autoPlay muted playsInline controls onPlaying={()=>{setReceived(true);setNeedsPlay(false);setVideoState('Canlı görüntü')}}/>{!received&&<div className="viewer-placeholder">{needsPlay?<button className="primary" onClick={()=>void video.current?.play().catch(()=>setError('Görüntü oynatılamadı. Oturumu yeniden başlatın.'))}>Görüntüyü aç</button>:<LoaderCircle size={25} className="spin"/>}<span>{room.state==='awaiting_consent'?'Karşı bilgisayardaki kullanıcının onayı bekleniyor':videoState}</span></div>}</div><p className="small-description">{videoState} · Görüntü kaydedilmez. Pilot yalnızca izleme destekler.</p></>}
+   {room.security?.version===1&&<details className="security-panel"><summary><ShieldCheck size={16}/> Oturum güvenliği</summary><p>Tek kullanımlık davet · Yerel onay · En fazla 30 dakika · Bağlantı denemesi sınırı</p>{room.state==='waiting'&&<p>Davetin son kullanımı: {new Date(room.security.inviteExpiresAt*1000).toLocaleTimeString('tr-TR')}</p>}<ol>{room.security.events.map((event,i)=><li key={i}><time>{new Date(event.at*1000).toLocaleTimeString('tr-TR')}</time> {securityLabels[event.kind]??'Oturum durumu değişti'}</li>)}</ol><small>Yalnızca bu oturumun olayları gösterilir. Kayıtlar sunucu belleğinde tutulur; ekran içeriği kaydedilmez.</small></details>}
    <button className="secondary stop-pilot" disabled={busy} onClick={stop}><Square size={14}/>{room.state==='ended'?'Yeni denemeye dön':'Denemeyi bitir'}</button>
   </section>}
   <div className="info-notice"><ShieldCheck size={18}/><p>Cloudflare Tunnel eşleştirme trafiğini taşır. Görüntü WebRTC üzerinden şifrelenir. Bu yapılandırmada TURN yok; doğrudan bağlantının engellendiği ağlarda görüntü açılamaz. Uygulama veya sunucu kapanırsa deneme sona erer.</p></div>

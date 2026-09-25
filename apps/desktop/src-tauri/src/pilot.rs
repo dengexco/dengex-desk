@@ -71,6 +71,8 @@ async fn response(mut r: reqwest::Response) -> Result<Value, String> {
             "unauthorized" => "Sunucu bağlantı bilgisi geçersiz.",
             "invalid_transition" => "Oturum durumu değişti; yeniden kontrol edin.",
             "guest_hosts_disabled" => "Bu sunucuda Windows davet oluşturma açık değil; sunucu yöneticisi pilot sürümünü güncellemeli.",
+            "join_rate_limited" | "authentication_rate_limited" => "Çok sayıda bağlantı denemesi yapıldı. Bir dakika bekleyip tekrar deneyin.",
+            "server_busy" => "Sunucu meşgul. Birkaç saniye sonra yeniden deneyin.",
             "creation_rate_limited" => "Çok sayıda davet oluşturuldu. Bir dakika sonra tekrar deneyin.",
             "pilot_capacity" => "Pilot sunucusunda açık oturum sınırına ulaşıldı. Önce önceki denemeleri kapatın.",
             _ => "Sunucu isteği reddetti. Bağlantıyı kontrol edip yeniden deneyin.",
