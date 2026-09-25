@@ -4,6 +4,8 @@
 #include <bcrypt.h>
 #include <wchar.h>
 #include <string.h>
+#include <shellapi.h>
+#include <stdio.h>
 #include "runtime_hash.h"
 
 // This executable imports only OS DLLs. Application code is not loaded until
@@ -51,10 +53,14 @@ static int fail(int code, BOOL quiet, LPCWSTR text) {
 }
 
 int WINAPI wWinMain(HINSTANCE instance, HINSTANCE previous, LPWSTR command, int show) {
-    (void)instance; (void)previous; (void)show;
-    BOOL verify_only = wcscmp(command, L"--verify-package") == 0;
-    BOOL load_only = wcscmp(command, L"--load-check") == 0;
+    (void)instance; (void)previous; (void)show; (void)command;
+    int argc = 0;
+    LPWSTR *argv = CommandLineToArgvW(GetCommandLineW(), &argc);
+    BOOL verify_only = argv && argc == 2 && wcscmp(argv[1], L"--verify-package") == 0;
+    BOOL load_only = argv && argc == 2 && wcscmp(argv[1], L"--load-check") == 0;
+    if (argv) LocalFree(argv);
     BOOL quiet = verify_only || load_only;
+    SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX);
     // No current directory or PATH search, including subsequent dynamic loads.
     if (!SetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_SYSTEM32))
         return fail(10, quiet, L"Guvenli DLL yukleme baslatilamadi.");
@@ -79,6 +85,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE previous, LPWSTR command, int 
         return fail(13, quiet, L"DLL butunluk kontrolu basarisiz. Dosya degismis veya farkli surumden. Resmi ZIP paketini yeniden indirin.");
     }
     if (verify_only) { CloseHandle(file); return 0; }
+    if (load_only) { fputs("DLL hash verified; loading library\n", stderr); fflush(stderr); }
     length = GetFinalPathNameByHandleW(file, final_path, ARRAYSIZE(final_path), FILE_NAME_NORMALIZED | VOLUME_NAME_DOS);
     if (!length || length >= ARRAYSIZE(final_path)) {
         CloseHandle(file);
@@ -86,15 +93,17 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE previous, LPWSTR command, int 
     }
     HMODULE library = LoadLibraryExW(final_path, NULL, LOAD_LIBRARY_SEARCH_SYSTEM32);
     if (!library) {
+        if (load_only) { fprintf(stderr, "LoadLibraryEx failed: %lu\n", GetLastError()); fflush(stderr); }
         CloseHandle(file);
         return fail(14, quiet, L"Uygulama DLL'i acilamadi. Windows x64 ve Media Foundation gerekir. Windows N surumlerinde Media Feature Pack'i kontrol edin.");
     }
+    if (load_only) { fputs("Library loaded; checking ABI\n", stderr); fflush(stderr); }
     AppFunction version = exported(library, "DxAppAbiVersion");
     AppFunction run = exported(library, "DxAppRun");
     if (!version || !run || version() != 1)
         return fail(15, quiet, L"EXE ile DLL surumleri uyusmuyor. Paketi birlikte guncelleyin.");
     // Do not unload the library: framework threads/callbacks can outlive run().
     // OS teardown releases the DLL and the locked file together at process exit.
-    if (load_only) return 0;
+    if (load_only) { fputs("ABI verified\n", stderr); fflush(stderr); return 0; }
     return (int)run();
 }

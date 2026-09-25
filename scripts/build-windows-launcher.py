@@ -33,7 +33,7 @@ def build(dll, output):
             libraries = [f"/libpath:{sdk / p}" for p in ["crt/lib/x86_64", "sdk/lib/um/x86_64", "sdk/lib/ucrt/x86_64"]]
         compile_args = ["/nologo", "/O2", "/W4", "/WX", "/MT", "/guard:cf", "/utf-8", f"/I{temp}"] + includes + [f"/Tc{source / 'launcher.c'}", f"/Fo{temp / 'launcher.obj'}"]
         link_args = libraries + ["/SUBSYSTEM:WINDOWS", "/DYNAMICBASE", "/NXCOMPAT", "/HIGHENTROPYVA", "/guard:cf", "/MANIFEST:EMBED",
-                                f"/MANIFESTINPUT:{source / 'app.manifest'}", "bcrypt.lib", "user32.lib", "kernel32.lib"]
+                                f"/MANIFESTINPUT:{source / 'app.manifest'}", "bcrypt.lib", "user32.lib", "kernel32.lib", "shell32.lib"]
         if os.name == "nt":
             subprocess.run(compiler + compile_args + [f"/Fe{output}", "/link"] + link_args, check=True)
         else:
