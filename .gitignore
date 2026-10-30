@@ -26,3 +26,6 @@ __pycache__/
 
 apps/desktop/src-tauri/resources/pilot-server.json
 infra/self-host/secrets/
+
+playwright-report/
+test-results/
