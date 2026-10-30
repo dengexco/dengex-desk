@@ -8,4 +8,4 @@ The HTTPS server is a trusted authority: it holds the session signing key and ca
 
 Invitation consumption, grant verification, expiry, anti-replay, bounded requests, rate limits, DLL integrity/loading and relay-only behavior are covered by automated tests. Tests do not replace native two-device acceptance or a professional audit. Desktop releases are not Authenticode-signed or Apple-notarized. DLL hash pinning detects a mismatched DLL but cannot defend against replacement of both EXE and DLL.
 
-See [deployment boundaries](docs/self-hosting.md), [DLL design](docs/security-and-dll.md) and [test coverage](docs/testing/beta-release.md).
+See [deployment boundaries](docs/self-hosting.md), [DLL design](docs/security-and-dll.tr.md) and [test coverage](docs/testing/beta-release.md).

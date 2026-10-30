@@ -49,7 +49,7 @@ docker compose --env-file infra/self-host/.env -f infra/self-host/compose.yaml -
 
 Bu beta en fazla 8 eşzamanlı oda için sınırlandırılmıştır. Misafir davet oluşturma açık olduğunda sunucu adresini bilen herkes kendi odasını oluşturabilir; davet ve yerel onay olmadan mevcut ekranlara erişemez. Çok kullanıcılı kurumsal yetkilendirme yoktur. UDP engelli ağlarda TURN/TCP veya TURN/TLS desteği bulunmadığından bağlantı kurulamayabilir. Windows ana monitörü en fazla 1280×720 ile paylaşır; kilitli masaüstü, UAC güvenli masaüstü ve RDP desteklenmez.
 
-[Security policy](SECURITY.md) · [Güvenlik/DLL ayrıntıları](docs/security-and-dll.md) · [Test kapsamı](docs/testing/beta-release.md)
+[Security policy](SECURITY.md) · [Güvenlik/DLL ayrıntıları](docs/security-and-dll.tr.md) · [Test kapsamı](docs/testing/beta-release.md)
 
 ## Kaynaktan derleme
 
