@@ -18,7 +18,7 @@ container=None
 try:
     with (art/'turn-container.log').open('w') as log:
         network=['--network','host'] if linux else ['-p','127.0.0.1:34780:3478/udp','-p','127.0.0.1:34780:3478/tcp','-p','127.0.0.1:51000-51020:51000-51020/udp']
-        p=subprocess.run(['docker','run','--rm','-d','--name',name,'--cap-drop=ALL','--security-opt=no-new-privileges','--read-only','--tmpfs','/tmp']+network+[
+        p=subprocess.run(['docker','run','-d','--name',name,'--cap-drop=ALL','--cap-add=NET_BIND_SERVICE','--security-opt=no-new-privileges','--read-only','--tmpfs','/tmp']+network+[
             '-v',str(config)+':/etc/coturn/turnserver.conf:ro',
             'coturn/coturn:4.15.0','-c','/etc/coturn/turnserver.conf'],stdout=subprocess.PIPE,stderr=log,text=True,timeout=90)
     if p.returncode:raise RuntimeError('TURN container could not start; see turn-container.log')
@@ -27,6 +27,8 @@ try:
         try:
             socket.create_connection(('127.0.0.1',34780),timeout=.5).close();break
         except OSError:time.sleep(.25)
+    else:
+        raise RuntimeError('TURN listener did not start')
     user=str(int(time.time())+240)+':phase0'
     credential=base64.b64encode(hmac.new(secret.encode(),user.encode(),hashlib.sha1).digest()).decode()
     for protocol in ['udp','tcp']:
@@ -48,10 +50,15 @@ try:
             with (art/'turn-native-video.log').open('w') as log:
                 video=subprocess.run([str(root/'target/debug/dx-probe'),'native','--relay','--helper',str(art/'native/dx-macos-probe'),'--seconds','8','--start-local-test','--report',str(art/'turn-native-video.json')],env=env,stdout=log,stderr=log,timeout=60)
             print('native-video', 'passed' if video.returncode==0 else 'failed',flush=True)
+except Exception:
+    if container:
+        diagnostic=subprocess.run(['docker','logs',container],capture_output=True,text=True,timeout=5)
+        print((diagnostic.stdout+diagnostic.stderr).replace(secret,'[redacted]')[-6000:],flush=True)
+    raise
 finally:
     if container:
         with (art/'turn-server-runtime.log').open('w') as log:
             subprocess.run(['docker','logs',container],stdout=log,stderr=log,timeout=5)
-        subprocess.run(['docker','stop',container],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=20)
+        subprocess.run(['docker','rm','-f','-v',container],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=20)
     config.unlink(missing_ok=True)
     private.cleanup()
