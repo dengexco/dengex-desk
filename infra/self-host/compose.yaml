@@ -1,0 +1,57 @@
+name: dengex-remote
+services:
+  api:
+    build: ../../services/api
+    restart: unless-stopped
+    environment:
+      DX_LISTEN: 0.0.0.0:8080
+      DX_PILOT_TOKEN_FILE: /run/secrets/admin-token
+      DX_PILOT_GUEST_HOSTS: ${DX_PILOT_GUEST_HOSTS:-1}
+      DX_TURN_URL: ${DX_TURN_URL:-}
+      DX_TURN_SECRET_FILE: ${DX_TURN_SECRET_FILE:-}
+      DX_RELAY_ONLY: ${DX_RELAY_ONLY:-0}
+    volumes:
+      - ./secrets/admin-token:/run/secrets/admin-token:ro
+      - ./secrets/turn-secret:/run/secrets/turn-secret:ro
+    ports:
+      - 127.0.0.1:8080:8080
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    healthcheck:
+      test: [CMD, /api, --healthcheck]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    mem_limit: 128m
+    pids_limit: 64
+  https:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      DX_DOMAIN: ${DX_DOMAIN:?Run scripts/setup-server.py first}
+    ports: ["80:80", "443:443"]
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      api:
+        condition: service_healthy
+    security_opt: [no-new-privileges:true]
+  turn:
+    image: coturn/coturn:4.15.0
+    profiles: [turn]
+    restart: unless-stopped
+    # Linux server only. Host networking preserves advertised UDP relay ports.
+    network_mode: host
+    command: ["-c", "/etc/coturn/turnserver.conf"]
+    volumes:
+      - ./secrets/turnserver.conf:/etc/coturn/turnserver.conf:ro
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+volumes:
+  caddy_data:
+  caddy_config:

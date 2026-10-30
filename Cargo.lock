@@ -1043,7 +1043,7 @@ dependencies = [
 
 [[package]]
 name = "dengex-agent-core"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "base64 0.22.1",
  "ed25519-dalek",
@@ -1055,7 +1055,7 @@ dependencies = [
 
 [[package]]
 name = "dengex-desktop"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "base64 0.22.1",
  "dengex-agent-core",
@@ -1071,14 +1071,14 @@ dependencies = [
 
 [[package]]
 name = "dengex-platform-windows"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "windows 0.62.2",
 ]
 
 [[package]]
 name = "dengex-transport"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "async-trait",

@@ -2,6 +2,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 # Set PATH to your toolchain, or source scripts/env.sh for workspace-local tools.
+cp apps/desktop/src-tauri/resources/pilot-server.example.json apps/desktop/src-tauri/resources/pilot-server.json
 bash scripts/build-macos.sh
 mode=release
 cargo_profile=release
@@ -24,7 +25,14 @@ codesign --force --sign - --timestamp=none "$bundle/Contents/Resources/resources
 codesign --force --sign - --timestamp=none "$bundle/Contents/Resources/resources/dx-device-identity"
 codesign --force --sign - --timestamp=none --options runtime "$bundle"
 codesign --verify --deep --strict "$bundle"
-archive=".artifacts/releases/dengeX-Remote-Lab-macOS-$(uname -m).zip"
-ditto -c -k --sequesterRsrc --keepParent "$bundle" "$archive"
+archive=".artifacts/releases/dengeX-Remote-macOS-$(uname -m).zip"
+stage=".artifacts/releases/macos-$(uname -m)"
+mkdir -p "$stage"
+ditto "$bundle" "$stage/dengeX Remote Lab.app"
+cp LICENSE "$stage/LICENSE.txt"
+cp docs/quickstart.md "$stage/START-HERE.md"
+python3 scripts/collect-notices.py
+cp .artifacts/THIRD-PARTY-NOTICES.txt "$stage/THIRD-PARTY-NOTICES.txt"
+ditto -c -k --sequesterRsrc "$stage" "$archive"
 shasum -a 256 "$archive" > .artifacts/releases/SHA256SUMS.txt
 printf '%s\n' 'Development application only. Ad-hoc signature, no Developer ID / notarization.'

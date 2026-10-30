@@ -198,6 +198,7 @@ pub fn run() {
             request_permission,
             run_probe,
             pilot::pilot_config,
+            pilot::pilot_check,
             pilot::pilot_create,
             pilot::pilot_join,
             pilot::pilot_poll,

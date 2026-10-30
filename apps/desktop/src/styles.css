@@ -6,3 +6,6 @@
 :root .security-panel{margin-top:20px;padding:16px;border:1px solid var(--border,#dbe4e0);border-radius:12px;font-size:13px;line-height:1.7}
 .security-panel summary{cursor:pointer;font-weight:600;display:flex;align-items:center;gap:8px}
 .security-panel ol{padding-left:20px}.security-panel time{font-variant-numeric:tabular-nums}.security-panel small{display:block;opacity:.75}
+
+.server-setup { margin-bottom: 24px; }
+[hidden] { display: none !important; }

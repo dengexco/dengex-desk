@@ -1,107 +1,87 @@
 # dengeX Remote
 
-Windows ve macOS için Tauri, Rust, Swift ve Go ile geliştirilen uzaktan destek projesi. [MIT lisanslıdır](LICENSE).
+[![Verify](https://github.com/dengexco/dengex-desk/actions/workflows/verify.yml/badge.svg)](https://github.com/dengexco/dengex-desk/actions/workflows/verify.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-**Geliştirme aşamasındadır; üretime hazır değildir.** Native laboratuvar araçları ve davet/onay ile Windows veya Mac ekranını karşı bilgisayardan izlemeyi hedefleyen pilot akış mevcuttur. Windows'ta çalıştırma ve iki fiziksel cihaz arasında canlı görüntü kabulü henüz tamamlanmadı.
+Windows ve macOS için **kendi sunucunuzda çalışan, kullanıcı onaylı ekran paylaşımı**. MIT lisanslıdır. Görüntü WebRTC ile şifrelenir; her bağlantı için ekranı paylaşan kişinin açık onayı gerekir.
 
-## Windows uygulamasını indir
+**0.2.0 beta:** gerçek ekran yakalama ve izleme vardır. Uzaktan klavye/fare kontrolü, dosya aktarımı, ses, katılımsız erişim, kalıcı cihaz numarası ve hesap/MFA sistemi henüz yoktur. Ücretsiz ortak bağlantı sunucusu sağlanmaz. Bu sürüm küçük ekiplerin kontrollü denemelerine yöneliktir; tam AnyDesk alternatifi olduğu iddia edilmez.
 
-**[Windows x64 ZIP paketini indir](https://github.com/dengexco/dengex-desk/releases/download/v0.1.0-pilot.3/dengeX-Remote-Windows-x64.zip)**
+## İndir ve bağlan
 
-1. `dengeX-Remote-Windows-x64.zip` dosyasının tamamını bir klasöre çıkartın.
-2. İçindeki **`dengeX Remote.exe`** uygulamasını açın; `dengex_desktop.dll` ve `resources` klasörünü yanında tutun.
-3. **Windows ekranına bağlanmak için:** Windows’ta **Cihaza bağlan → Bu bilgisayarın ekranını paylaş → Davet oluştur** seçin.
-4. Mac’te **Davet ile ekranı izle** bölümüne Windows’taki kodu girin; Windows kullanıcısı gelen isteği kabul etsin.
+[Windows ve macOS paketleri → Releases](https://github.com/dengexco/dengex-desk/releases)
 
-[Sürüm sayfasında](https://github.com/dengexco/dengex-desk/releases/tag/v0.1.0-pilot.3) kullanım adımları ve SHA-256 dosyası da bulunur. **Source code (zip)** geliştiriciler içindir; Windows'ta çalıştırılacak uygulama paketi yukarıdaki ZIP'tir. Pilot 3 EXE + DLL paketidir; tek EXE yeterli değildir.
+| Bilgisayar | İndirilecek dosya |
+|---|---|
+| Windows 11 x64 | `dengeX-Remote-Windows-x64.zip` |
+| macOS 14+ Apple Silicon | `dengeX-Remote-macOS-arm64.zip` |
+| macOS 14+ Intel | `dengeX-Remote-macOS-x86_64.zip` |
 
-Windows 11 x64 hedeflenir; Microsoft Edge WebView2 Runtime gereklidir. Paket imzasız bir pilot sürümdür. İçindeki Cloudflare test adresi geçicidir; Mac ve pilot sunucusu açık kalmalıdır. Windows → Mac ve Mac → Windows ekran izleme akışları vardır; uzak klavye/fare kontrolü yoktur.
+1. Önce [sunucuyu kurun](docs/self-hosting.md) veya yöneticinizden mevcut sunucunun HTTPS adresini alın.
+2. ZIP'i tamamen çıkarın. Windows'ta **dengeX Remote.exe** dosyasını DLL ve `resources` klasörüyle birlikte tutun. macOS'ta uygulamayı Applications'a taşıyın.
+3. İki bilgisayarda aynı sunucu adresini girip **Sunucuyu kontrol et** düğmesine basın.
+4. Ekranı paylaşacak bilgisayarda **Davet oluştur**; izleyecek bilgisayarda daveti girip bağlantı isteği gönderin.
+5. Paylaşan bilgisayarda isteği kontrol edip **Ekranımı paylaşmayı kabul et** düğmesine basın. **Paylaşımı bitir** veya uygulamayı kapatma paylaşımı durdurur.
 
-Gerçek macOS ekran yakalama, VideoToolbox H.264 encode/decode, yerel WebRTC taşıma, native görüntü sunumu, Türkçe metin/fare deneyi ve native güvenlik çekirdeği geliştirildi. Sahte uzaktan bağlantı, örnek ekran videosu veya uydurma cihaz listesi yoktur. Ürün rotaları entegrasyon tamamlanana kadar 503 döner.
+Paketler ticari kod imzalama sertifikası/noter onayı içermez. Windows WebView2 gerekir; Windows N sürümlerinde Media Feature Pack gerekebilir. macOS'ta Ekran Kaydı izni gerekir. [Ayrıntılı kurulum ve sorun giderme](docs/quickstart.md).
 
-- [Gerçek doğrulama sonuçları ve sınırları](docs/testing/results.md)
-- [Mimari ve mevcut modüller](docs/architecture.md)
-- [Motor/codec kararı](docs/adr/0001-phase-zero-engine.md)
-- [Uygulama güvenliği ve DLL paketleme](docs/security-and-dll.tr.md)
-- [Tehdit modeli](docs/threat-model.md)
-- [Kurulum ve işletim](docs/operations.md)
-- [Gerçek cihaz kabul listesi](docs/testing/manual-matrix.md)
-- [Ürün gereksinimleri](docs/requirements.tr.txt)
-- [Katkıda bulunma](CONTRIBUTING.md)
+## Sunucu
 
-Git geçmişi kaynak kodu ve belgeleri içerir. Derleme çıktıları ve çalışma zamanı anahtarları Git'e eklenmez. İndirilebilir uygulamalar Releases bölümünde ayrı dosyalar olarak yayımlanır. İlk pilot ZIP yalnızca public test sunucusu adresini içerir; davet veya sunucu yönetim anahtarı içermez.
+Linux, Docker Compose, bir alan adı ve herkese açık sunucu gerekir. HTTPS için 80/443 TCP; isteğe bağlı TURN için 3478 ve 49160–49200 UDP açılır.
 
-## Cloudflare ve Windows görüntüleme pilotu
-
-Pilot 2, Windows cihazının davet oluşturmasını ve ekranını Mac’e paylaşmasını ekler. Windows ekranı DXGI ile alınır, en fazla 1280×720 NV12’ye dönüştürülür ve Windows Media Foundation H.264 kodlayıcısından WebRTC’ye verilir. Görüntü kareleri React/JSON/base64 üzerinden geçirilmez. Uzak klavye/fare halen yoktur; gerçek Windows ekranı ve iki fiziksel cihaz kabulü beklenir.
-
-- [Pilot kurulum ve güven sınırları](docs/cloudflare-pilot.tr.md)
-- [Windows kullanım adımları](docs/windows-pilot.tr.txt)
-- Geçerli adres: `python3 scripts/pilot-server.py status`. Cloudflare Quick Tunnel test içindir; bu Mac uyanık ve süreçler açık kalmalıdır.
-- Bağlanılacak Windows: **Cihaza bağlan → Davet oluştur**. İzleyecek Mac: daveti girip istek gönderir. Windows kullanıcısı ekranını paylaşmayı kabul eder.
-- İzleyen Mac’in ekran kaydı iznine ihtiyacı yoktur. Mac kendi ekranını paylaşacaksa macOS izni gerekir.
-- Sunucuda `DX_PILOT_GUEST_HOSTS=1` ile açılan misafir davet akışı, yönetim anahtarı dağıtmadan cihazın kendi oturumunu oluşturmasına izin verir; en fazla 6 yeni davet/dakika ve 8 açık oda.
-- Public HTTPS üzerinden davet, tekrar kullanımın reddi, host onayı ve sonlandırma kontrolleri [geçti](docs/testing/evidence/cloudflare-api.json). Bu sonuç Windows runtime veya iki fiziksel cihaz kabulü değildir.
-
-## macOS geliştirme paketini açma
-
-ZIP'i açıp `dengeX Remote Lab.app` uygulamasını çalıştırın. Son kullanıcıda Node.js, Rust veya Go gerekmez. Paket **ad-hoc geliştirme imzalıdır; Developer ID/notarization yoktur**, production dağıtımı değildir. Sistem güvenlik uyarısını otomatik atlayan kurulum betiği kullanılmaz.
-
-Ana ekran destek servisine henüz bağlı değildir. **Teknik doğrulama** bölümündeki testler gerçekten çalışır:
-
-1. WebRTC bağlantısı: iki yerel uç arasında şifreli veri kanalı.
-2. Video codec: açıkça sentetik karelerden H.264/WebRTC/native decode.
-3. Gerçek ekran: “Ekranımı 15 sn test et” düğmesiyle başlayan görünür native deney; Durdur düğmesi. İzin eksikse hemen nedeni ve “Ekran iznini aç” eylemi gösterilir.
-4. Yerel giriş: sadece test uygulamasının kendi penceresinde Türkçe metin ve fare tıklaması.
-
-Ana ekranda gösterilen kalıcı cihaz kimliği, rastgele UUID ve Ed25519 anahtarıyla oluşturulur. Özel anahtar macOS Anahtar Zinciri’nde tutulur; arayüze yalnızca public key ve kimlik bilgisi çıkar. Kimlik henüz sunucuya kaydedilmediği için uzaktan bağlanılabilir bir adres değildir. Geçici kod, destek servisi bağlanana kadar kullanılamaz. Anahtar kasası hatasında kimlik sessizce yenilenmez.
-
-Ekran/giriş için uygulamadaki **İzinler** bölümünden ilgili sistem ayarını açın, **dengeX Remote Lab** iznini etkinleştirin. macOS isterse uygulamayı kapatıp yeniden açın. İzin sorguları arka planda yürür ve bir testin hata mesajını silmez. Terminalden çalışan helper ile `.app` izin bağlamı aynı değildir. Katılımsız erişim, otomatik başlangıç, sistem servisi ve kayıt açılmaz.
-
-## Kaynaktan geliştirme
-
-Geliştirici gereksinimleri: Node 24+, Rust 1.98.1, Go 1.27.1, Python 3; macOS native için Command Line Tools/Swift, Windows için Microsoft C++ Build Tools ve WebView2 Runtime. Araçları PATH üzerinde hazırlayın. `.tools` klasörü kişisel geliştirme ortamıdır ve depoda dağıtılmaz; `scripts/env.sh` yalnızca bu klasördeki araçları kullanan mevcut çalışma alanları içindir.
-
-```bash
+```sh
 git clone https://github.com/dengexco/dengex-desk.git
 cd dengex-desk
+python3 scripts/setup-server.py --domain destek.example.com --turn-ip SUNUCUNUN_PUBLIC_IPV4_ADRESI
+docker compose --env-file infra/self-host/.env -f infra/self-host/compose.yaml --profile turn up -d --build --wait
+```
+
+Örnek alan adını/IP yer tutucusunu değiştirin. `--turn-ip` kullanılmazsa `--profile turn` seçeneğini de kaldırın; bu durumda yalnızca doğrudan WebRTC bağlantısı denenir. Kurulum mevcut sırların üzerine yazmaz. [HTTPS, Cloudflare Tunnel, TURN, güncelleme ve yedekleme](docs/self-hosting.md).
+
+## Güvenlik ve sınırlar
+
+- Tek kullanımlık 256 bit davet, 5 dakika geçerlilik; en fazla 30 dakikalık oturum.
+- Sunucuda atomik davet tüketimi, açık yerel onay, deneme/hacim sınırları ve sınırlı bellek kullanımı.
+- İmzalı, DTLS kimliklerine bağlı kısa süreli görüntüleme yetkisi. Yetki yenilenmezse native yakalama durur.
+- TURN parolaları onay sonrasında oturum/role göre üretilir; sunucunun ortak sırrı istemciye gönderilmez.
+- Windows EXE, birlikte dağıtılan DLL'nin SHA-256 özetini yüklemeden önce doğrular. Bu, Authenticode imzasının yerine geçmez.
+- Sunucu ekran görüntülerini kaydetmez. Olay kayıtları bellekte sınırlıdır; davet, token, SDP ve ekran içermez. İzleyen kişi kendi cihazında kayıt yapabilir.
+
+Bu beta en fazla 8 eşzamanlı oda için sınırlandırılmıştır. Misafir davet oluşturma açık olduğunda sunucu adresini bilen herkes kendi odasını oluşturabilir; davet ve yerel onay olmadan mevcut ekranlara erişemez. Çok kullanıcılı kurumsal yetkilendirme yoktur. UDP engelli ağlarda TURN/TCP veya TURN/TLS desteği bulunmadığından bağlantı kurulamayabilir. Windows ana monitörü en fazla 1280×720 ile paylaşır; kilitli masaüstü, UAC güvenli masaüstü ve RDP desteklenmez.
+
+[Security policy](SECURITY.md) · [Güvenlik/DLL ayrıntıları](docs/security-and-dll.md) · [Test kapsamı](docs/testing/beta-release.md)
+
+## Kaynaktan derleme
+
+Geliştirme için Node.js 24 LTS, `rust-toolchain.toml` içindeki Rust sürümü, Go 1.27.2 ve Python 3.9+ gerekir. macOS'ta Xcode Command Line Tools; Windows'ta Visual Studio 2022 C++ Build Tools ve Windows SDK gerekir. Son kullanıcı bunları kurmaz.
+
+```sh
 npm ci
 npm run build
+cargo test --locked -p dengex-agent-core -p dengex-transport --lib
+# services/api dizininde:
+go test -race ./...
 ```
 
-macOS masaüstü geliştirme:
+macOS paketi: `bash scripts/package-macos.sh`.
+Windows paketi: **x64 Native Tools PowerShell** içinde `./scripts/package-windows.ps1`.
+Çıktılar `.artifacts/releases/` altındadır. Yerel Tauri geliştirme: `npm run desktop -- dev` (macOS paylaşımı için önce `bash scripts/package-macos.sh --debug` ile native yardımcıları üretin).
 
-```bash
-bash scripts/build-macos.sh
-cargo build --locked -p dengex-transport
-mkdir -p apps/desktop/src-tauri/resources
-cp target/debug/dx-probe apps/desktop/src-tauri/resources/dx-probe
-cp .artifacts/native/dx-macos-probe apps/desktop/src-tauri/resources/dx-macos-probe
-cp .artifacts/native/dx-device-identity apps/desktop/src-tauri/resources/dx-device-identity
-# Yalnızca henüz yerel sunucu yapılandırması yoksa:
-test -f apps/desktop/src-tauri/resources/pilot-server.json || cp apps/desktop/src-tauri/resources/pilot-server.example.json apps/desktop/src-tauri/resources/pilot-server.json
-npm run desktop -- dev
-```
+[Build and publish desktop release](.github/workflows/release.yml) iş akışı testleri, Windows DLL yükleme kontrolünü ve her iki Mac mimarisinin derlemesini tamamladıktan sonra beta paketlerini ve SHA-256 özetlerini yayımlar. Yayın paketlerinde özel sunucu adresi veya yönetici sırrı bulunmaz.
 
-Yalnızca UI geliştirme görünümü: `npm run dev` → `http://127.0.0.1:1420`. Tarayıcı native testleri simüle etmez; test düğmeleri devre dışıdır.
+## Yapı ve katkı
 
-```bash
-bash scripts/check.sh
-bash scripts/test-postgres.sh         # önce operations.md içindeki lab DB kurulumu
-python3 scripts/test-local-turn.py    # Docker gerekli, geçici localhost fixture
-bash scripts/package-macos.sh        # release-mode development .app; production imzası değil
-```
+| Dizin | Sorumluluk |
+|---|---|
+| `apps/desktop` | Tauri 2 / React arayüzü, native oturum yönetimi |
+| `native/agent-core` | Yetki doğrulama, yeniden kullanım koruması, protokol kuralları |
+| `native/transport` | Rust WebRTC ve H.264 akışı |
+| `native/platform-windows` | DXGI ve Media Foundation |
+| `native/platform-macos` | ScreenCaptureKit ve VideoToolbox yardımcıları |
+| `native/windows-launcher` | DLL bütünlüğünü kontrol eden EXE |
+| `services/api` | Go eşleştirme, onay, süreli yetki ve TURN kimlik bilgileri |
+| `infra/self-host` | Kullanılabilir HTTPS + API + isteğe bağlı TURN kurulumu |
 
-Go süreç denemesi: `cd services/api && DX_LISTEN=127.0.0.1:18432 go run ./cmd/api`. Çalışma zamanı hazır olmayan ürün işlevlerini başarılı gibi döndürmez.
+`infra/compose.yaml`, veritabanı şemaları ve `/v1` taslakları gelecekteki kurumsal sürümün laboratuvarıdır; yukarıdaki kurulum bunlara ihtiyaç duymaz. Eski pilot belgeleri tarihsel test kayıtlarıdır.
 
-Windows üzerinde kaynak derlemesi için Node/Rust/MSVC araçları hazırken önce `apps/desktop/src-tauri/resources/pilot-server.example.json` dosyasını aynı klasörde `pilot-server.json` adıyla kopyalayın; var olan yerel yapılandırmayı değiştirmeyin. Ardından `npm ci`, `npm run build` ve `cargo build --locked --target x86_64-pc-windows-msvc -p dengex-desktop --lib --features tauri/custom-protocol` çalıştırın. Başlatıcı ve DLL dağıtım adımları [paketleme belgesindedir](docs/security-and-dll.tr.md). `rustup target add x86_64-pc-windows-msvc` ile hedef kurulabilir. Sunucu adresi boşken uygulama açılır; pilot ekranında kendi HTTPS sunucunuzun adresi girilir. `scripts/package-windows-cross.sh`, ilk geliştirme ortamındaki yerel cargo-xwin/LLVM/SDK araçlarına bağlıdır; temiz klon için otomatik araç kurucusu değildir.
-
-Cloudflare pilotunu çalıştırmak için [ayrı kurulum belgesini](docs/cloudflare-pilot.tr.md) izleyin. Oturum davetleri ve özel anahtarlar depodan veya Releases üzerinden dağıtılmaz. İlk Windows pilot ZIP'indeki public test adresi kalıcı bir ortak hizmet değildir; kendi sunucunuzu kullanabilirsiniz.
-
-## Sıradaki kabul kapısı
-
-Windows ekran paylaşımının gerçek cihaz kabulü, uzak input ve kalıcı cihaz kimliği entegrasyonu; dört platform eşleşmesi; farklı ağ ve TURN/TLS; consent/revoke/lease'in canlı medya ve input'a bağlanması. Bunlar bitmeden Aşama 0 ve Aşama 1 tamamlandı sayılmaz. Ayrıntılı Next.js paneli, OIDC/MFA/PKCE, managed agent, cihaz parolası, dosya/pano/sohbet, imzalı güncelleme ve production işletim sonraki aşamalardır.
-
-## Lisans
-
-Projenin kendi kaynak kodu [MIT](LICENSE) lisansı altındadır. Üçüncü taraf bağımlılıklar kendi lisanslarına tabidir; [Rust bağımlılık dökümü](docs/dependency-licenses.md) başlangıç envanteridir.
+[Katkı kılavuzu](CONTRIBUTING.md) · [Planlanan kapsam](docs/requirements.tr.txt) · [MIT lisansı](LICENSE). Üçüncü taraf bileşenlerin lisansları paketlerin `THIRD-PARTY-NOTICES.txt` dosyasında bulunur.

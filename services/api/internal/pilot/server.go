@@ -33,17 +33,19 @@ type Room struct {
 	Events                           []SecurityEvent
 }
 type Server struct {
-	mu                sync.Mutex
-	rooms             map[string]*Room
-	createHash        [32]byte
-	key               ed25519.PrivateKey
-	now               func() time.Time
-	AllowGuestHosts   bool // Explicit deployment opt-in; configure before serving.
-	guestWindow       time.Time
-	guestCreates      int
-	joins, failedAuth budget
-	events            []SecurityEvent
-	uploads           chan struct{}
+	mu                  sync.Mutex
+	rooms               map[string]*Room
+	createHash          [32]byte
+	key                 ed25519.PrivateKey
+	now                 func() time.Time
+	AllowGuestHosts     bool // Explicit deployment opt-in; configure before serving.
+	guestWindow         time.Time
+	guestCreates        int
+	joins, failedAuth   budget
+	events              []SecurityEvent
+	uploads             chan struct{}
+	turnURL, turnSecret string
+	relayOnly           bool
 }
 
 func New(createToken string) (*Server, error) {
@@ -340,6 +342,9 @@ func (s *Server) action(w http.ResponseWriter, r *http.Request) {
 func (s *Server) snapshot(room *Room, role string) map[string]any {
 	result := map[string]any{"id": room.ID, "role": role, "state": room.State, "viewerName": room.ViewerName, "expiresAt": room.Expires.Unix(), "capabilities": []string{"view_screen"}, "accountVerified": false}
 	result["security"] = map[string]any{"version": 1, "inviteExpiresAt": room.InviteExpires.Unix(), "events": room.Events}
+	if room.State == "negotiating" || room.State == "active" {
+		result["ice"] = s.ice(room, role)
+	}
 	if role == "viewer" && room.Offer != nil {
 		result["offer"] = room.Offer
 	}

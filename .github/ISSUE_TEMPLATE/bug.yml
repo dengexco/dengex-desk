@@ -1,0 +1,27 @@
+name: Hata bildirimi
+description: Kurulum, bağlantı veya görüntü sorunu bildirin.
+title: "[Hata] "
+body:
+  - type: markdown
+    attributes:
+      value: "Güvenlik açıklarını SECURITY.md üzerinden özel bildirin. Davet, token, SDP, kişisel bilgi veya ekran içeriği eklemeyin."
+  - type: input
+    id: version
+    attributes:
+      label: Uygulama sürümü ve iki cihazın işletim sistemi
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Adımlar, beklenen davranış ve görülen hata
+    validations:
+      required: true
+  - type: dropdown
+    id: network
+    attributes:
+      label: Ağ düzeni
+      options:
+        - Aynı yerel ağ
+        - Farklı ağlar; TURN açık
+        - Farklı ağlar; TURN yok veya bilinmiyor

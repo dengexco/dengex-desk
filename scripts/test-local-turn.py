@@ -6,6 +6,7 @@ Production config continues to deny private/loopback peer destinations.
 import base64, hashlib, hmac, json, os, pathlib, secrets, socket, subprocess, time, sys
 root=pathlib.Path(__file__).resolve().parent.parent
 art=root/'.artifacts'
+art.mkdir(exist_ok=True)
 secret=secrets.token_urlsafe(48)
 config=art/'turn-loopback.conf'
 config.write_text('\n'.join(['listening-port=3478','listening-ip=0.0.0.0','relay-ip=127.0.0.1','external-ip=127.0.0.1','min-port=51000','max-port=51020','realm=dengex-local.invalid','fingerprint','use-auth-secret','static-auth-secret='+secret,'no-tls','no-dtls','no-cli','allow-loopback-peers','no-multicast-peers','user-quota=8','total-quota=24','max-bps=2000000','log-file=stdout']))
@@ -32,6 +33,12 @@ try:
         with (art/f'turn-{protocol}.log').open('w') as log:
             result=subprocess.run([str(root/'target/debug/dx-probe'),'transport','--relay','--report',str(art/f'turn-{protocol}.json')],env=env,stdout=log,stderr=log,timeout=60)
         print(protocol,'passed' if result.returncode==0 else 'failed',flush=True)
+        if protocol == 'udp' and result.returncode:
+            raise RuntimeError('Required TURN/UDP data-channel test failed')
+        if protocol == 'udp':
+            subprocess.run(['cargo','test','--locked','-p','dengex-transport','--lib','remote_host_gathers_only_relay_candidates','--','--ignored'],env=env,check=True,timeout=120)
+        if protocol == 'tcp' and result.returncode == 0:
+            raise RuntimeError('Unsupported TCP unexpectedly fell back to a direct connection')
         if protocol=='udp' and result.returncode==0 and '--video' in sys.argv:
             video_user=str(int(time.time())+120)+':phase0-video'
             env['DX_TURN_USERNAME']=video_user

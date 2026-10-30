@@ -25,3 +25,4 @@ __pycache__/
 *.pyc
 
 apps/desktop/src-tauri/resources/pilot-server.json
+infra/self-host/secrets/

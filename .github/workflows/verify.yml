@@ -1,5 +1,10 @@
 name: Verify source and native builds
-on: [push, pull_request, workflow_dispatch]
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
 permissions:
   contents: read
 jobs:
@@ -17,8 +22,11 @@ jobs:
           components: clippy,rustfmt
       - run: cargo test --locked -p dengex-agent-core
       - run: cargo test --locked -p dengex-platform-windows
+      - run: cargo test --locked -p dengex-transport --lib
       - run: cargo build --locked -p dengex-transport
       - run: cargo run --locked -p dengex-transport -- transport --report transport.json
+      - if: runner.os == 'macOS'
+        run: cargo test --locked -p dengex-desktop --lib
       - uses: actions/upload-artifact@v4
         with:
           name: transport-${{ matrix.os }}
@@ -63,6 +71,32 @@ jobs:
           path: |
             target/debug/dengex_desktop.dll
             target/debug/dengex-launcher.exe
+  relay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.98.1
+      - run: cargo build --locked -p dengex-transport
+      - run: python3 scripts/test-local-turn.py
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relay-evidence
+          path: |
+            .artifacts/turn-udp.json
+            .artifacts/turn-tcp.json
+  deployment:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 scripts/setup-server.py --domain support.example.com
+      - run: docker compose --env-file infra/self-host/.env -f infra/self-host/compose.yaml up -d --build --wait api
+      - run: python3 scripts/test-server.py http://127.0.0.1:8080
+      - if: always()
+        run: docker compose --env-file infra/self-host/.env -f infra/self-host/compose.yaml down --volumes
   frontend:
     runs-on: ubuntu-latest
     steps:

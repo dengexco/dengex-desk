@@ -26,7 +26,7 @@ use webrtc::{
     peer_connection::{
         register_default_interceptors, MediaEngine, PeerConnection, PeerConnectionBuilder,
         PeerConnectionEventHandler, RTCConfigurationBuilder, RTCIceGatheringState, RTCIceServer,
-        RTCSessionDescription, Registry, SettingEngine,
+        RTCIceTransportPolicy, RTCSessionDescription, Registry, SettingEngine,
     },
 };
 struct Events(mpsc::Sender<()>);
@@ -53,8 +53,22 @@ pub struct Host {
     pub pc: Arc<dyn PeerConnection>,
     track: Arc<TrackLocalStaticSample>,
 }
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct IceConfig {
+    pub ice_servers: Vec<IceServer>,
+    pub ice_transport_policy: RTCIceTransportPolicy,
+}
+#[derive(serde::Deserialize)]
+pub struct IceServer {
+    urls: Vec<String>,
+    #[serde(default)]
+    username: String,
+    #[serde(default)]
+    credential: String,
+}
 impl Host {
-    pub async fn prepare() -> Result<(Self, serde_json::Value)> {
+    pub async fn prepare(ice: IceConfig) -> Result<(Self, serde_json::Value)> {
         let mut media = MediaEngine::default();
         media.register_codec(
             RTCRtpCodecParameters {
@@ -68,10 +82,17 @@ impl Host {
         let mut settings = SettingEngine::default();
         settings.set_include_loopback_candidate(true);
         let config = RTCConfigurationBuilder::default()
-            .with_ice_servers(vec![RTCIceServer {
-                urls: vec!["stun:stun.cloudflare.com:3478".into()],
-                ..Default::default()
-            }])
+            .with_ice_servers(
+                ice.ice_servers
+                    .into_iter()
+                    .map(|s| RTCIceServer {
+                        urls: s.urls,
+                        username: s.username,
+                        credential: s.credential,
+                    })
+                    .collect(),
+            )
+            .with_ice_transport_policy(ice.ice_transport_policy)
             .build();
         let pc: Arc<dyn PeerConnection> = Arc::new(
             PeerConnectionBuilder::new()
@@ -319,5 +340,45 @@ impl Host {
         let _ = self.pc.close().await;
         result?;
         Ok(frames.load(Ordering::Relaxed))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn browser_ice_configuration_deserializes_without_stun_credentials() {
+        let config: IceConfig = serde_json::from_value(serde_json::json!({
+            "iceServers": [{"urls": ["stun:stun.cloudflare.com:3478"]}],
+            "iceTransportPolicy": "all"
+        }))
+        .unwrap();
+        assert_eq!(config.ice_servers.len(), 1);
+        assert!(config.ice_servers[0].credential.is_empty());
+    }
+
+    #[tokio::test]
+    #[ignore = "requires isolated authenticated TURN fixture"]
+    async fn remote_host_gathers_only_relay_candidates() {
+        let ice: IceConfig = serde_json::from_value(serde_json::json!({
+            "iceServers": [{"urls": [std::env::var("DX_TURN_URL").unwrap()],
+                "username": std::env::var("DX_TURN_USERNAME").unwrap(),
+                "credential": std::env::var("DX_TURN_CREDENTIAL").unwrap()}],
+            "iceTransportPolicy": "relay"
+        }))
+        .unwrap();
+        let (host, offer) = Host::prepare(ice).await.unwrap();
+        let sdp = offer["sdp"].as_str().unwrap();
+        let candidates: Vec<_> = sdp
+            .lines()
+            .filter(|s| s.starts_with("a=candidate:"))
+            .collect();
+        let relay_only =
+            !candidates.is_empty() && candidates.iter().all(|c| c.contains(" typ relay"));
+        host.pc.close().await.unwrap();
+        assert!(
+            relay_only,
+            "host must gather relay candidates without direct fallback"
+        );
     }
 }

@@ -47,7 +47,7 @@ fn validate_url(url: &str) -> Result<String, String> {
     {
         return Err("Yalnızca HTTPS sunucu adresi girin; yol, parola ve sorgu içermemeli.".into());
     }
-    Ok(url.trim_end_matches('/').into())
+    Ok(u.as_str().trim_end_matches('/').into())
 }
 async fn response(mut r: reqwest::Response) -> Result<Value, String> {
     let status = r.status();
@@ -70,7 +70,7 @@ async fn response(mut r: reqwest::Response) -> Result<Value, String> {
             "session_expired" => "Oturum sona erdi. Yeni bir davet oluşturun.",
             "unauthorized" => "Sunucu bağlantı bilgisi geçersiz.",
             "invalid_transition" => "Oturum durumu değişti; yeniden kontrol edin.",
-            "guest_hosts_disabled" => "Bu sunucuda Windows davet oluşturma açık değil; sunucu yöneticisi pilot sürümünü güncellemeli.",
+            "guest_hosts_disabled" => "Bu sunucuda davet oluşturma kapalı. Sunucu yöneticisi misafir paylaşımını etkinleştirmeli.",
             "join_rate_limited" | "authentication_rate_limited" => "Çok sayıda bağlantı denemesi yapıldı. Bir dakika bekleyip tekrar deneyin.",
             "server_busy" => "Sunucu meşgul. Birkaç saniye sonra yeniden deneyin.",
             "creation_rate_limited" => "Çok sayıda davet oluşturuldu. Bir dakika sonra tekrar deneyin.",
@@ -227,6 +227,28 @@ pub async fn pilot_config(app: tauri::AppHandle) -> Result<Value, String> {
     Ok(config)
 }
 #[tauri::command]
+pub async fn pilot_check(server_url: String) -> Result<Value, String> {
+    let url = validate_url(server_url.trim())?;
+    let r = api()?
+        .get(format!("{url}/readyz"))
+        .send()
+        .await
+        .map_err(|_| {
+            "Sunucuya ulaşılamıyor. HTTPS adresini ve sunucunun açık olduğunu kontrol edin."
+        })?;
+    if !r.status().is_success() {
+        return Err(
+            "Sunucu ekran paylaşımına hazır değil. Sunucu kurulumunu veya sürümünü kontrol edin."
+                .into(),
+        );
+    }
+    let status = response(r).await?;
+    if status["service"] != "dengex-remote" || status["protocol"] != 1 || status["ready"] != true {
+        return Err("Bu adres uyumlu bir dengeX Remote sunucusu değil.".into());
+    }
+    Ok(status)
+}
+#[tauri::command]
 pub async fn pilot_create(
     app: tauri::AppHandle,
     state: State<'_, PilotState>,
@@ -284,7 +306,7 @@ pub async fn pilot_join(
     if slot.is_some() {
         return Err("Önce mevcut denemeyi sonlandırın".into());
     }
-    let url = validate_url(&server_url)?;
+    let url = validate_url(server_url.trim())?;
     let v = response(
         api()?
             .post(format!("{url}/pilot/join"))
@@ -372,14 +394,20 @@ pub async fn pilot_accept(
             }
             helper
         };
-        c.action("accept", None).await?;
+        let accepted = c.action("accept", None).await?;
+        let ice: dengex_transport::remote::IceConfig =
+            serde_json::from_value(accepted.get("ice").cloned().unwrap_or(json!({
+                "iceServers": [{"urls": ["stun:stun.cloudflare.com:3478"]}],
+                "iceTransportPolicy": "all"
+            })))
+            .map_err(|_| "Sunucu ağ yapılandırması geçersiz")?;
         if let Some(window) = app.get_webview_window("main") {
             let _ = window.set_title("Ekran paylaşımı açık — dengeX Remote");
         }
         tauri::async_runtime::spawn(async move {
             use std::sync::atomic::{AtomicU64, Ordering};
             let result=async{
-    let (host,offer)=dengex_transport::remote::Host::prepare().await.map_err(error)?;
+    let (host,offer)=dengex_transport::remote::Host::prepare(ice).await.map_err(error)?;
     let mut stopped=c.stop.subscribe();
     let outcome=async{
      let local=fingerprint(&offer)?;c.action("offer",Some(offer)).await?;
