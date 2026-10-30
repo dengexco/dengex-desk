@@ -26,3 +26,9 @@ Bu sürüm için Windows↔Mac ve diğer iki cihaz çiftlerinde gerçek kullanı
 6. macOS izin reddi/yeniden açma ve Windows WebView2/Media Feature Pack eksikliği için anlaşılır hata.
 
 CI'nin yeşil olması donanım/izin/NAT uyumluluğunun tamamını veya üretim güvenlik denetimini kanıtlamaz.
+
+## 30 Ekim 2026 yerel kontrol
+
+Apple Silicon Mac üzerinde WebRTC 0.21.1 ile sentetik H.264 ve gerçek ekranın yerel WebRTC üzerinden çözülmesi geçti. Kare sayıları ve sonuçlar [beta-native-local.json](evidence/beta-native-local.json) içindedir; ekran görüntüsü kaydedilmedi. Bu aynı cihazdaki native motor testidir; kurulu uygulamada iki farklı cihaz bağlantısını kanıtlamaz. Arayüzde sunucu adresi hatırlama, sekme değişiminde oturumun korunması ve açık onay akışı Playwright ile mock native IPC üzerinden doğrulanır.
+
+Rust bağımlılık taramasında bulunan crypto-bigint zinciri WebRTC 0.21.1 yükseltmesiyle kaldırıldı; rustls, webpki, kök sertifikalar ve Tokio güncellendi. Cargo audit güvenlik açığı hatası vermiyor; upstream Tauri bağımlılıklarında bakımı bırakılmış paketler ve Linux glib için uyarılar sürüyor. Bunlar yok sayma listesi eklenerek gizlenmedi.

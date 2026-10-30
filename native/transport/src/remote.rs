@@ -26,7 +26,7 @@ use webrtc::{
     peer_connection::{
         register_default_interceptors, MediaEngine, PeerConnection, PeerConnectionBuilder,
         PeerConnectionEventHandler, RTCConfigurationBuilder, RTCIceGatheringState, RTCIceServer,
-        RTCIceTransportPolicy, RTCSessionDescription, Registry, SettingEngine,
+        RTCIceTransportPolicy, RTCSessionDescription, Registry, SettingEngineBuilder,
     },
 };
 struct Events(mpsc::Sender<()>);
@@ -79,8 +79,9 @@ impl Host {
         )?;
         let registry = register_default_interceptors(Registry::new(), &mut media)?;
         let (tx, mut rx) = mpsc::channel(1);
-        let mut settings = SettingEngine::default();
-        settings.set_include_loopback_candidate(true);
+        let settings = SettingEngineBuilder::new()
+            .with_include_loopback_candidate(true)
+            .build();
         let config = RTCConfigurationBuilder::default()
             .with_ice_servers(
                 ice.ice_servers
@@ -105,20 +106,23 @@ impl Host {
                 .build()
                 .await?,
         );
-        let track = Arc::new(TrackLocalStaticSample::new(MediaStreamTrack::new(
-            "dengex-pilot".into(),
-            "screen".into(),
-            "Approved screen".into(),
-            RtpCodecKind::Video,
-            vec![RTCRtpEncodingParameters {
-                rtp_coding_parameters: RTCRtpCodingParameters {
-                    ssrc: Some(1),
+        let track = Arc::new(TrackLocalStaticSample::new(
+            Instant::now(),
+            MediaStreamTrack::new(
+                "dengex-pilot".into(),
+                "screen".into(),
+                "Approved screen".into(),
+                RtpCodecKind::Video,
+                vec![RTCRtpEncodingParameters {
+                    rtp_coding_parameters: RTCRtpCodingParameters {
+                        ssrc: Some(1),
+                        ..Default::default()
+                    },
+                    codec: codec(),
                     ..Default::default()
-                },
-                codec: codec(),
-                ..Default::default()
-            }],
-        ))?);
+                }],
+            ),
+        )?);
         let result = async {
             pc.add_track(track.clone() as Arc<dyn TrackLocal>).await?;
             pc.set_local_description(pc.create_offer(None).await?)
@@ -255,7 +259,7 @@ impl Host {
                     if *stop.borrow() || clock.elapsed().as_millis() as u64>=deadline.load(Ordering::SeqCst){break Ok(frames)}
                     let duration=last.elapsed().max(Duration::from_millis(1));last=Instant::now();
                     // Bound a stuck network send so local revocation stays responsive.
-                    match timeout(Duration::from_millis(250),self.track.write_sample(1,102,&Sample{data:output.into(),duration,..Default::default()},&[])).await {
+                    match timeout(Duration::from_millis(250),self.track.write_sample(1,102,&Sample{data:output.into(),duration,..Sample::new(Instant::now())},&[])).await {
                         Ok(Ok(()))=>frames+=1,Ok(Err(e))=>break Err(e.into()),Err(_)=>break Err(anyhow::anyhow!("Görüntü aktarımı zaman aşımına uğradı"))
                     }
                 },
@@ -318,7 +322,7 @@ impl Host {
                         &Sample {
                             data: frame.into(),
                             duration: Duration::from_secs_f64(1.0 / 30.0),
-                            ..Default::default()
+                            ..Sample::new(Instant::now())
                         },
                         &[],
                     )

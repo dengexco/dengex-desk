@@ -9,8 +9,8 @@ name = "dx-probe"
 path = "src/main.rs"
 [dependencies]
 dengex-agent-core = { path = "../agent-core" }
-webrtc = "=0.20.5"
-rtc = "=0.20.5"
+webrtc = "=0.21.1"
+rtc = "=0.21.1"
 async-trait = "0.1"
 serde.workspace = true
 serde_json.workspace = true

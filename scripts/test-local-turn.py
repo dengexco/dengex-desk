@@ -3,21 +3,22 @@
 Deliberately permits loopback peers inside this isolated, authenticated fixture.
 Production config continues to deny private/loopback peer destinations.
 """
-import base64, hashlib, hmac, json, os, pathlib, secrets, socket, subprocess, time, sys
+import base64, hashlib, hmac, json, os, pathlib, secrets, socket, subprocess, time, sys, tempfile
 root=pathlib.Path(__file__).resolve().parent.parent
 art=root/'.artifacts'
 art.mkdir(exist_ok=True)
 secret=secrets.token_urlsafe(48)
-config=art/'turn-loopback.conf'
-config.write_text('\n'.join(['listening-port=3478','listening-ip=0.0.0.0','relay-ip=127.0.0.1','external-ip=127.0.0.1','min-port=51000','max-port=51020','realm=dengex-local.invalid','fingerprint','use-auth-secret','static-auth-secret='+secret,'no-tls','no-dtls','no-cli','allow-loopback-peers','no-multicast-peers','user-quota=8','total-quota=24','max-bps=2000000','log-file=stdout']))
-config.chmod(0o600)
+private=tempfile.TemporaryDirectory(prefix='turn-fixture-',dir=art)
+config=pathlib.Path(private.name)/'turn-loopback.conf'
+linux=sys.platform.startswith('linux')
+config.write_text('\n'.join(['listening-port='+('34780' if linux else '3478'),'listening-ip='+('127.0.0.1' if linux else '0.0.0.0'),'relay-ip=127.0.0.1','external-ip=127.0.0.1','min-port=51000','max-port=51020','realm=dengex-local.invalid','fingerprint','use-auth-secret','static-auth-secret='+secret,'no-tls','no-dtls','no-cli','allow-loopback-peers','no-multicast-peers','pidfile=/tmp/turnserver.pid','user-quota=8','total-quota=24','max-bps=2000000','log-file=stdout']))
+config.chmod(0o444)
 name='dx-phase0-relay-'+str(os.getpid())
 container=None
 try:
     with (art/'turn-container.log').open('w') as log:
-        p=subprocess.run(['docker','run','--rm','-d','--name',name,
-            '-p','127.0.0.1:34780:3478/udp','-p','127.0.0.1:34780:3478/tcp',
-            '-p','127.0.0.1:51000-51020:51000-51020/udp',
+        network=['--network','host'] if linux else ['-p','127.0.0.1:34780:3478/udp','-p','127.0.0.1:34780:3478/tcp','-p','127.0.0.1:51000-51020:51000-51020/udp']
+        p=subprocess.run(['docker','run','--rm','-d','--name',name,'--cap-drop=ALL','--security-opt=no-new-privileges','--read-only','--tmpfs','/tmp']+network+[
             '-v',str(config)+':/etc/coturn/turnserver.conf:ro',
             'coturn/coturn:4.15.0','-c','/etc/coturn/turnserver.conf'],stdout=subprocess.PIPE,stderr=log,text=True,timeout=90)
     if p.returncode:raise RuntimeError('TURN container could not start; see turn-container.log')
@@ -34,6 +35,7 @@ try:
             result=subprocess.run([str(root/'target/debug/dx-probe'),'transport','--relay','--report',str(art/f'turn-{protocol}.json')],env=env,stdout=log,stderr=log,timeout=60)
         print(protocol,'passed' if result.returncode==0 else 'failed',flush=True)
         if protocol == 'udp' and result.returncode:
+            print((art/'turn-udp.json').read_text(),flush=True)
             raise RuntimeError('Required TURN/UDP data-channel test failed')
         if protocol == 'udp':
             subprocess.run(['cargo','test','--locked','-p','dengex-transport','--lib','remote_host_gathers_only_relay_candidates','--','--ignored'],env=env,check=True,timeout=120)
@@ -52,3 +54,4 @@ finally:
             subprocess.run(['docker','logs',container],stdout=log,stderr=log,timeout=5)
         subprocess.run(['docker','stop',container],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=20)
     config.unlink(missing_ok=True)
+    private.cleanup()

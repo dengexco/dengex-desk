@@ -34,7 +34,7 @@ use webrtc::{
     peer_connection::{
         register_default_interceptors, MediaEngine, PeerConnection, PeerConnectionBuilder,
         PeerConnectionEventHandler, RTCConfiguration, RTCConfigurationBuilder,
-        RTCIceGatheringState, RTCIceServer, RTCIceTransportPolicy, Registry, SettingEngine,
+        RTCIceGatheringState, RTCIceServer, RTCIceTransportPolicy, Registry, SettingEngineBuilder,
     },
 };
 
@@ -84,7 +84,7 @@ fn config(relay: bool) -> Result<RTCConfiguration> {
             bail!("invalid TURN URL");
         }
         if url.starts_with("turns:") || url.contains("transport=tcp") {
-            bail!("TURN_TCP_TLS_UNSUPPORTED: webrtc-rs 0.20.5 currently gathers UDP TURN only; direct fallback is forbidden in relay mode");
+            bail!("TURN_TCP_TLS_UNSUPPORTED: webrtc-rs 0.21.1 currently gathers UDP TURN only; direct fallback is forbidden in relay mode");
         }
         b = b
             .with_ice_servers(vec![RTCIceServer {
@@ -142,8 +142,8 @@ impl PeerConnectionEventHandler for Handler {
                 .with_max_time_delay(Duration::from_millis(100));
             while let Some(e) = remote.poll().await {
                 if let TrackRemoteEvent::OnRtpPacket(packet) = e {
-                    builder.push(packet);
-                    while let Some(sample) = builder.pop() {
+                    builder.push(Instant::now(), packet);
+                    while let Some(sample) = builder.pop(Instant::now()) {
                         if sample.data.len() > 4_194_304 {
                             continue;
                         }
@@ -167,8 +167,9 @@ async fn peer(config: RTCConfiguration, handler: Handler) -> Result<Arc<dyn Peer
         RtpCodecKind::Video,
     )?;
     let registry = register_default_interceptors(Registry::new(), &mut m)?;
-    let mut settings = SettingEngine::default();
-    settings.set_include_loopback_candidate(true);
+    let settings = SettingEngineBuilder::new()
+        .with_include_loopback_candidate(true)
+        .build();
     Ok(Arc::new(
         PeerConnectionBuilder::new()
             .with_configuration(config)
@@ -197,7 +198,7 @@ async fn main() -> Result<()> {
     match result {
         Ok(mut report) => {
             report["schemaVersion"] = 1.into();
-            report["engine"] = "webrtc-rs 0.20.5".into();
+            report["engine"] = "webrtc-rs 0.21.1".into();
             report["relayRequired"] = relay.into();
             report["twoDeviceTest"] = false.into();
             let data = serde_json::to_vec_pretty(&report)?;
@@ -212,7 +213,7 @@ async fn main() -> Result<()> {
                 std::fs::write(
                     p,
                     serde_json::to_vec_pretty(
-                        &serde_json::json!({"schemaVersion":1,"engine":"webrtc-rs 0.20.5","result":"failed","reason":e.to_string(),"twoDeviceTest":false}),
+                        &serde_json::json!({"schemaVersion":1,"engine":"webrtc-rs 0.21.1","result":"failed","reason":e.to_string(),"twoDeviceTest":false}),
                     )?,
                 )?;
             }
@@ -289,20 +290,23 @@ async fn run_peers(
             }
         }
     });
-    let track = Arc::new(TrackLocalStaticSample::new(MediaStreamTrack::new(
-        "dengex-lab".into(),
-        "screen".into(),
-        "Local screen test".into(),
-        RtpCodecKind::Video,
-        vec![RTCRtpEncodingParameters {
-            rtp_coding_parameters: RTCRtpCodingParameters {
-                ssrc: Some(1),
+    let track = Arc::new(TrackLocalStaticSample::new(
+        Instant::now(),
+        MediaStreamTrack::new(
+            "dengex-lab".into(),
+            "screen".into(),
+            "Local screen test".into(),
+            RtpCodecKind::Video,
+            vec![RTCRtpEncodingParameters {
+                rtp_coding_parameters: RTCRtpCodingParameters {
+                    ssrc: Some(1),
+                    ..Default::default()
+                },
+                codec: codec(),
                 ..Default::default()
-            },
-            codec: codec(),
-            ..Default::default()
-        }],
-    ))?);
+            }],
+        ),
+    )?);
     if matches!(args.command, Command::Native { .. }) {
         a.add_track(track.clone() as Arc<dyn TrackLocal>).await?;
     }
@@ -379,7 +383,7 @@ async fn run_peers(
                         &Sample {
                             data: buffer.into(),
                             duration: Duration::from_secs_f64(1.0 / 30.0),
-                            ..Default::default()
+                            ..Sample::new(Instant::now())
                         },
                         &[],
                     )

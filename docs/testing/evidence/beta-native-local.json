@@ -1,0 +1,62 @@
+{
+  "checkedAt": "2026-10-30T12:16:51.537933+00:00",
+  "scope": "Same Mac only; not a two-device acceptance test",
+  "synthetic": {
+    "droppedAccessUnits": 0,
+    "engine": "webrtc-rs 0.21.1",
+    "experiment": "local_webrtc_native",
+    "handshakeAndEchoMs": 10,
+    "native": {
+      "codec": "H264",
+      "decodedFrames": 89,
+      "elapsedSeconds": 4.565873980522156,
+      "encodedBytes": 599840,
+      "encodedFrames": 90,
+      "experiment": "local_webrtc_loopback",
+      "hardwareEncoder": true,
+      "height": 180,
+      "inputTest": false,
+      "reason": "completed",
+      "renderDrops": 0,
+      "result": "passed",
+      "schemaVersion": 1,
+      "twoDeviceTest": false,
+      "width": 320
+    },
+    "receivedAccessUnits": 89,
+    "relayRequired": false,
+    "result": "passed",
+    "schemaVersion": 1,
+    "syntheticSource": true,
+    "twoDeviceTest": false
+  },
+  "screen": {
+    "droppedAccessUnits": 0,
+    "engine": "webrtc-rs 0.21.1",
+    "experiment": "local_webrtc_native",
+    "handshakeAndEchoMs": 94,
+    "native": {
+      "codec": "H264",
+      "decodedFrames": 119,
+      "elapsedSeconds": 4.244208931922913,
+      "encodedBytes": 1131179,
+      "encodedFrames": 121,
+      "experiment": "local_webrtc_loopback",
+      "hardwareEncoder": true,
+      "height": 1080,
+      "inputTest": false,
+      "reason": "completed",
+      "renderDrops": 1,
+      "result": "passed",
+      "schemaVersion": 1,
+      "twoDeviceTest": false,
+      "width": 1920
+    },
+    "receivedAccessUnits": 120,
+    "relayRequired": false,
+    "result": "passed",
+    "schemaVersion": 1,
+    "syntheticSource": false,
+    "twoDeviceTest": false
+  }
+}
